@@ -124,6 +124,56 @@ header.header.scrolled {
   color: var(--cyan);
 }
 
+/* Mobile Menu */
+.mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 1.5rem;
+  cursor: pointer;
+  margin-left: 20px;
+}
+
+.mobile-menu {
+  display: none;
+  position: fixed;
+  top: 70px;
+  left: 0;
+  right: 0;
+  background: rgba(5, 5, 16, 0.95);
+  backdrop-filter: blur(12px);
+  z-index: 999;
+  padding: 20px;
+  flex-direction: column;
+  gap: 15px;
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.mobile-menu a, .mobile-menu button {
+  color: var(--text);
+  text-decoration: none;
+  font-size: 1.1rem;
+  padding: 10px;
+  border-radius: 5px;
+  transition: all 0.3s ease;
+}
+
+.mobile-menu a:hover, .mobile-menu button:hover {
+  background: rgba(160, 32, 240, 0.2);
+}
+
+.mobile-menu button {
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 /* Hero Section */
 .hero {
   height: 100vh;
@@ -737,8 +787,11 @@ footer.footer {
   }
   
   .nav a {
-    margin-left: 15px;
-    font-size: 0.9rem;
+    display: none;
+  }
+  
+  .mobile-menu-toggle {
+    display: block;
   }
   
   .assistant {
@@ -762,8 +815,23 @@ footer.footer {
     gap: 10px;
   }
 
+  .about-img {
+    width: 200px;
+    height: 200px;
+  }
   
-  /* Добавь это в свой CSS */
+  .skills {
+    justify-content: center;
+  }
+  
+  .assistant {
+    width: 90%;
+    right: 5%;
+    bottom: 20px;
+  }
+}
+
+/* Добавь это в свой CSS */
 :root {
   /* Добавляем переменные для анимаций */
   --transition-base: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -907,5 +975,4 @@ html {
     opacity: 1;
     transform: translateY(0);
   }
-}
 }

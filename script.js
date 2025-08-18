@@ -11,6 +11,28 @@ window.addEventListener('scroll', () => {
   }
 });
 
+// Mobile menu toggle
+const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+const mobileMenu = document.getElementById('mobile-menu');
+const mobileAssistantToggle = document.getElementById('mobile-assistant-toggle');
+
+mobileMenuToggle.addEventListener('click', () => {
+  mobileMenu.style.display = mobileMenu.style.display === 'flex' ? 'none' : 'flex';
+});
+
+// Close mobile menu when clicking on a link
+document.querySelectorAll('#mobile-menu a').forEach(link => {
+  link.addEventListener('click', () => {
+    mobileMenu.style.display = 'none';
+  });
+});
+
+// Mobile assistant toggle
+mobileAssistantToggle.addEventListener('click', () => {
+  assistant.style.display = 'flex';
+  mobileMenu.style.display = 'none';
+});
+
 // Assistant toggle
 const assistant = document.getElementById("assistant");
 const assistantBody = document.getElementById("assistant-body");
@@ -145,9 +167,20 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
       }
     }
   });
-}
+});
 
+// Intersection Observer for section animations
+const sections = document.querySelectorAll('.section');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, {
+  threshold: 0.1
+});
 
-
-
-);
+sections.forEach(section => {
+  observer.observe(section);
+});
