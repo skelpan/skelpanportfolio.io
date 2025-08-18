@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>skelpan — Portfolio</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Floating Particles -->
+  <div class="particles" id="particles"></div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="logo">skelpan</div>
+    <nav class="nav">
+      <a href="#portfolio">Портфолио</a>
+      <a href="#about">Обо мне</a>
+      <a href="#contact">Контакты</a>
+      <button id="assistant-toggle"><i class="fas fa-robot"></i></button>
+    </nav>
+  </header>
+
+
+  
+  <!-- Hero -->
+  <section class="hero">
+    <h1 class="glow">Рассказываю о себе</h1>
+    
+    <p>Веб-Дизайнер, немного интересуюсь сайтостроением HTML, CSS и JS. Вполне интересная, приятная личность. </p>
+    <div class="hero-actions">
+      <a href="#portfolio" class="btn primary"><i class="fas fa-laptop-code"></i> Мои проекты</a>
+      <a href="#contact" class="btn ghost"><i class="fas fa-paper-plane"></i> Связаться</a>
+    </div>
+  </section>
+
+  <!-- Portfolio -->
+  <section id="portfolio" class="section">
+    <h2>Портфолио</h2>
+    <div class="grid">
+      <div class="card">
+        <img src="img/Aurora Dashboard.png" alt="Aurora Dashboard" class="card-img">
+        <div class="card-content">
+          <h3>Aniduo</h3>
+          <p>Подарок, сделанный владелице студии Aniduo. Потребовалось минимум времени и сбор поздравлений.</p>
+          <p>https://skelpan.github.io/aniduo.io/ </p>
+          <div class="card-tags">
+            <span class="tag">UI/UX</span>
+            <span class="tag">React</span>
+            <span class="tag">D3.js</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <img src="img/Quantum App.png" alt="Quantum App" class="card-img">
+        <div class="card-content">
+          <h3>Podarok Sistr</h3>
+          <p>Поздравление сестры с днем рождения. Пробы новых методов в дизайне. </p>
+         <p>https://skelpan.github.io/podaroksustr.io/ </p>
+          <div class="card-tags">
+            <span class="tag">Flutter</span>
+            <span class="tag">Motion</span>
+            <span class="tag">iOS/Android</span>
+          </div>
+        </div>
+      </div>
+       <div class="card">
+        <img src="" alt="Quantum App" class="card-img">
+        <div class="card-content">
+          <h3>Здесь что-то будет</h3>
+          <p>Здесь тоже что-то напишу, если будет не лень, а пока это будет просто текст.</p>
+         <p>https:// что-то там тоже буджет </p>
+          <div class="card-tags">
+            <span class="tag">Flutter</span>
+            <span class="tag">Motion</span>
+            <span class="tag">iOS/Android</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section id="about" class="section about">
+    <h2>Обо мне</h2>
+    <div class="about-content">
+      <img src="https://picsum.photos/600/600?random=4" alt="Skelpan" class="about-img">
+      <div class="about-text">
+        <p>Я настоящий, добрый и умный человек. Люблю видеоигры, разбираюсь в компьютерах и всегда рад обсудить их. В музыке мне нравится  —  "Тринадцать Карат". Со мной легко общаться: могу поддержать разговор на разные темы, поделиться мнением или просто весело провести время.</p>
+        <p> Если хочешь поговорить об играх, музыке, душевных переживаниях или чём-то ещё — давай знакомиться!</p>
+        <div class="skills">
+          <div class="skill"><i class="fas fa-code"></i> Преданность</div>
+          <div class="skill"><i class="fas fa-paint-brush"></i> Доброта</div>
+          <div class="skill"><i class="fas fa-mobile-alt"></i> Ум</div>
+          <div class="skill"><i class="fas fa-cube"></i> Логика</div>
+          <div class="skill"><i class="fas fa-film"></i> Творчество</div>
+          <div class="skill"><i class="fas fa-brain"></i> Понимание </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact -->
+  <section id="contact" class="section contact">
+    <h2>Контакты</h2>
+    <form id="contact-form" class="contact-form">
+      <div class="form-group">
+        <label for="name" class="form-label">Ваше имя</label>
+        <input type="text" id="name" class="form-control" placeholder="Как к вам обращаться?" required>
+      </div>
+      <div class="form-group">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" id="email" class="form-control" placeholder="Ваш email для ответа" required>
+      </div>
+      <div class="form-group">
+        <label for="message" class="form-label">Сообщение</label>
+        <textarea id="message" class="form-control" placeholder="Расскажите о вашем проекте..." required></textarea>
+      </div>
+      <button type="submit" class="btn primary submit-btn"><i class="fas fa-paper-plane"></i> Отправить сообщение</button>
+      <p> Временно недоступно</p>
+    </form>
+    
+    <div class="social-links">
+      <a href="#" class="social-link"><i class="fab fa-github"></i></a>
+      <a href="#" class="social-link"><i class="fab fa-behance"></i></a>
+      <a href="#" class="social-link"><i class="fab fa-dribbble"></i></a>
+      <a href="#" class="social-link"><i class="fab fa-linkedin-in"></i></a>
+      <a href="#" class="social-link"><i class="fab fa-telegram-plane"></i></a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-logo">skelpan</div>
+      <div class="footer-links">
+        <a href="#portfolio" class="footer-link">Портфолио</a>
+        <a href="#about" class="footer-link">Обо мне</a>
+        <a href="#contact" class="footer-link">Контакты</a>
+      </div>
+      <div class="copyright">© <span id="year"></span> skelpan. Все права защищены.</div>
+    </div>
+  </footer>
+
+  <!-- Assistant -->
+  <div id="assistant" class="assistant">
+    <div class="assistant-header">
+      <span><i class="fas fa-robot"></i> skelpan Assistant</span>
+      <button id="assistant-close" class="assistant-close">✕</button>
+    </div>
+    <div class="assistant-body" id="assistant-body">
+      <div class="msg bot">Привет! Я — твой цифровой помощник. Чем могу помочь? К сожалению пока что мои функции ограничены, но я еще учусь, так что в скором времени смогу помочь. 🚀</div>
+    </div>
+    <div class="assistant-input">
+      <input type="text" id="assistant-input" placeholder="Напишите ваш вопрос...">
+      <button id="assistant-send" class="assistant-send"><i class="fas fa-paper-plane"></i></button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
