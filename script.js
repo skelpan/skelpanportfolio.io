@@ -14,7 +14,6 @@ window.addEventListener('scroll', () => {
 // Mobile menu toggle
 const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
 const mobileMenu = document.getElementById('mobile-menu');
-const mobileAssistantToggle = document.getElementById('mobile-assistant-toggle');
 
 mobileMenuToggle.addEventListener('click', () => {
   mobileMenu.style.display = mobileMenu.style.display === 'flex' ? 'none' : 'flex';
@@ -25,94 +24,6 @@ document.querySelectorAll('#mobile-menu a').forEach(link => {
   link.addEventListener('click', () => {
     mobileMenu.style.display = 'none';
   });
-});
-
-// Mobile assistant toggle
-mobileAssistantToggle.addEventListener('click', () => {
-  assistant.style.display = 'flex';
-  mobileMenu.style.display = 'none';
-});
-
-// Assistant toggle
-const assistant = document.getElementById("assistant");
-const assistantBody = document.getElementById("assistant-body");
-const assistantInput = document.getElementById("assistant-input");
-const sendBtn = document.getElementById("assistant-send");
-
-document.getElementById("assistant-toggle").onclick = () => {
-  assistant.style.display = "flex";
-};
-document.getElementById("assistant-close").onclick = () => {
-  assistant.style.display = "none";
-};
-
-// Simple chat
-sendBtn.onclick = sendMessage;
-assistantInput.addEventListener("keypress", (e) => {
-  if (e.key === "Enter") sendMessage();
-});
-
-function sendMessage() {
-  const text = assistantInput.value.trim();
-  if (!text) return;
-  
-  appendMessage(text, "user");
-  assistantInput.value = "";
-  
-  // Simulate typing indicator
-  const typingIndicator = document.createElement("div");
-  typingIndicator.className = "msg bot";
-  typingIndicator.innerHTML = '<i class="fas fa-ellipsis-h"></i>';
-  assistantBody.appendChild(typingIndicator);
-  assistantBody.scrollTop = assistantBody.scrollHeight;
-  
-  setTimeout(() => {
-    assistantBody.removeChild(typingIndicator);
-    
-    const responses = [
-      "Отличный вопрос! Я могу рассказать больше о моих проектах или технологиях, которые я использую.",
-      "Спасибо за ваш интерес! Как я могу помочь вам сегодня?",
-      "Я пока учусь, но уже могу ответить на многие вопросы о моих работах.",
-      "Для быстрого ответа вы можете посмотреть мое портфолио или связаться со мной через форму контактов."
-    ];
-    
-    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-    appendMessage(randomResponse, "bot");
-  }, 1000 + Math.random() * 2000);
-}
-
-function appendMessage(text, type) {
-  const div = document.createElement("div");
-  div.className = `msg ${type}`;
-  div.textContent = text;
-  assistantBody.appendChild(div);
-  assistantBody.scrollTop = assistantBody.scrollHeight;
-}
-
-// Form submission
-document.getElementById("contact-form").addEventListener("submit", (e) => {
-  e.preventDefault();
-  
-  const form = e.target;
-  const submitBtn = form.querySelector('button[type="submit"]');
-  
-  // Change button to loading state
-  submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
-  submitBtn.disabled = true;
-  
-  // Simulate form submission
-  setTimeout(() => {
-    submitBtn.innerHTML = '<i class="fas fa-check"></i> Отправлено!';
-    submitBtn.style.background = 'var(--success)';
-    
-    // Reset form
-    setTimeout(() => {
-      form.reset();
-      submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Отправить сообщение';
-      submitBtn.style.background = '';
-      submitBtn.disabled = false;
-    }, 2000);
-  }, 1500);
 });
 
 // Create floating particles
@@ -162,9 +73,13 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
       });
       
       // Close assistant if open
+      const assistant = document.getElementById("assistant");
       if (assistant.style.display === 'flex') {
         assistant.style.display = 'none';
       }
+      
+      // Close mobile menu
+      mobileMenu.style.display = 'none';
     }
   });
 });
@@ -184,3 +99,39 @@ const observer = new IntersectionObserver((entries) => {
 sections.forEach(section => {
   observer.observe(section);
 });
+
+// Form submission
+document.getElementById("contact-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  
+  const form = e.target;
+  const submitBtn = form.querySelector('button[type="submit"]');
+  
+  // Change button to loading state
+  submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
+  submitBtn.disabled = true;
+  
+  // Simulate form submission
+  setTimeout(() => {
+    submitBtn.innerHTML = '<i class="fas fa-check"></i> Отправлено!';
+    submitBtn.style.background = 'var(--success)';
+    
+    // Reset form
+    setTimeout(() => {
+      form.reset();
+      submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Отправить сообщение';
+      submitBtn.style.background = '';
+      submitBtn.disabled = false;
+    }, 2000);
+  }, 1500);
+});
+
+// Touch device detection
+function isTouchDevice() {
+  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+}
+
+// Add touch device class
+if (isTouchDevice()) {
+  document.body.classList.add('touch-device');
+}
