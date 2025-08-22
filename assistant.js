@@ -38,7 +38,20 @@ class AIAssistant {
                 telegram: "https://t.me/skelpan31",
                 github: "https://github.com/skelpan",
                 email: "Через форму на сайте"
+            },
+            // Добавлены новые данные
+            personality: {
+                traits: ["добрый", "умный", "общительный", "творческий", "логичный"],
+                hobbies: ["видеоигры", "программирование", "дизайн", "музыка", "общение"],
+                favoriteMusic: "Тринадцать Карат"
             }
+        };
+        
+        // Состояние диалога для контекстного общения
+        this.dialogState = {
+            lastTopic: null,
+            userName: null,
+            userInterests: []
         };
         
         this.init();
@@ -64,8 +77,62 @@ class AIAssistant {
             });
         });
         
+        // Drag functionality for assistant window
+        this.makeDraggable();
+        
         // Load chat history
         this.loadChatHistory();
+    }
+    
+    makeDraggable() {
+        const header = this.assistant.querySelector('.assistant-header');
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
+        
+        header.addEventListener("mousedown", dragStart);
+        header.addEventListener("mouseup", dragEnd);
+        header.addEventListener("mousemove", drag);
+        
+        function dragStart(e) {
+            if (e.target.closest('.assistant-controls')) return;
+            
+            initialX = e.clientX - xOffset;
+            initialY = e.clientY - yOffset;
+            
+            if (e.target === header || e.target.parentElement === header) {
+                isDragging = true;
+            }
+        }
+        
+        function dragEnd(e) {
+            initialX = currentX;
+            initialY = currentY;
+            
+            isDragging = false;
+        }
+        
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+                
+                xOffset = currentX;
+                yOffset = currentY;
+                
+                setTranslate(currentX, currentY, this.assistant);
+            }
+        }
+        
+        function setTranslate(xPos, yPos, el) {
+            el.style.transform = "translate3d(" + xPos + "px, " + yPos + "px, 0)";
+        }
     }
     
     toggleAssistant() {
@@ -99,45 +166,86 @@ class AIAssistant {
     }
     
     generateResponse(message) {
+        // Extract user name if mentioned
+        this.extractUserInfo(message);
+        
         // Greetings
         if (this.matchPattern(message, ['привет', 'здравств', 'hi', 'hello', 'хай', 'добр'])) {
-            return "Привет! 👋 Я AI-помощник skelpan. Рад общению! Чем могу помочь?";
+            const greeting = this.getTimeBasedGreeting();
+            if (this.dialogState.userName) {
+                return `${greeting}, ${this.dialogState.userName}! 👋 Чем могу помочь?`;
+            }
+            return `${greeting}! 👋 Я AI-помощник skelpan. Рад общению! Как к вам обращаться?`;
+        }
+        
+        // User name handling
+        if (this.matchPattern(message, ['меня зовут', 'мое имя', 'зовут'])) {
+            return `Приятно познакомиться, ${this.dialogState.userName}! Чем могу помочь?`;
         }
         
         // About
-        if (this.matchPattern(message, ['кто ты', 'о себе', 'расскаж', 'about'])) {
+        if (this.matchPattern(message, ['кто ты', 'о себе', 'расскаж', 'about', 'ты кто'])) {
             return "Я цифровой помощник skelpan - веб-дизайнера и разработчика. Могу рассказать о проектах, навыках или просто пообщаться! 🚀";
         }
         
         // Projects
-        if (this.matchPattern(message, ['проект', 'работ', 'portfolio', 'aniduo', 'podarok', 'block', 'сайт'])) {
+        if (this.matchPattern(message, ['проект', 'работ', 'portfolio', 'aniduo', 'podarok', 'block', 'сайт', 'портфолио'])) {
+            this.dialogState.lastTopic = "projects";
             let response = "🎯 Мои проекты:\n\n";
             this.knowledgeBase.projects.forEach(project => {
                 response += `• ${project.name}: ${project.description}\n`;
                 response += `  🔗 ${project.url}\n`;
                 response += `  🛠 ${project.tech.join(', ')}\n\n`;
             });
+            response += "Хочешь узнать подробнее о каком-то конкретном проекте?";
             return response;
         }
         
+        // Specific project details
+        if (this.matchPattern(message, ['aniduo', 'анидуо'])) {
+            const project = this.knowledgeBase.projects.find(p => p.name === "Aniduo");
+            return `🎁 ${project.name}\n${project.description}\nЭтот проект был создан как подарок с использованием технологий: ${project.tech.join(', ')}.\nПосмотреть можно здесь: ${project.url}`;
+        }
+        
+        if (this.matchPattern(message, ['podarok', 'sistr', 'сестр', 'подарок'])) {
+            const project = this.knowledgeBase.projects.find(p => p.name === "Podarok Sistr");
+            return `🎂 ${project.name}\n${project.description}\nЭто поздравительный сайт с современным дизайном, созданный с использованием: ${project.tech.join(', ')}.\nПосмотреть можно здесь: ${project.url}`;
+        }
+        
+        if (this.matchPattern(message, ['block', 'блок', 'mr block'])) {
+            const project = this.knowledgeBase.projects.find(p => p.name === "_Mr_Block");
+            return `💻 ${project.name}\n${project.description}\nПортфолио для программиста, созданное с использованием: ${project.tech.join(', ')}.\nПосмотреть можно здесь: ${project.url}`;
+        }
+        
         // Skills
-        if (this.matchPattern(message, ['навык', 'умение', 'skill', 'технолог', 'stack', 'умеешь'])) {
+        if (this.matchPattern(message, ['навык', 'умение', 'skill', 'технолог', 'stack', 'умеешь', 'что ты умеешь'])) {
+            this.dialogState.lastTopic = "skills";
             return `💪 Мои навыки:\n\n💻 Технические: ${this.knowledgeBase.skills.technical.join(', ')}\n\n❤️ Личностные: ${this.knowledgeBase.skills.personal.join(', ')}\n\n🎮 Интересы: ${this.knowledgeBase.skills.interests.join(', ')}`;
         }
         
         // Contacts
-        if (this.matchPattern(message, ['контакт', 'связать', 'telegram', 'tg', 'github', 'почта'])) {
+        if (this.matchPattern(message, ['контакт', 'связать', 'telegram', 'tg', 'github', 'почта', 'email'])) {
+            this.dialogState.lastTopic = "contacts";
             return `📞 Контакты:\n\n📱 Telegram: ${this.knowledgeBase.contacts.telegram}\n\n🐙 GitHub: ${this.knowledgeBase.contacts.github}\n\n📧 Email: ${this.knowledgeBase.contacts.email}`;
         }
         
         // Games
-        if (this.matchPattern(message, ['игр', 'game', 'играешь', 'гейм'])) {
+        if (this.matchPattern(message, ['игр', 'game', 'играешь', 'гейм', 'видеоигр'])) {
+            this.dialogState.lastTopic = "games";
+            this.dialogState.userInterests.push("games");
             return "🎮 Обожаю видеоигры! Особенно стратегии, RPG и инди-игры. Люблю обсуждать геймдизайн и интересные механики. А во что играешь ты?";
         }
         
         // Music
-        if (this.matchPattern(message, ['музык', 'music', 'тринадцать', 'карат', 'слушаешь'])) {
-            return "🎵 Мой любимый исполнитель - 'Тринадцать Карат'! У них глубокая лирика и уникальное звучание. Также слушаю разную альтернативную музыку.";
+        if (this.matchPattern(message, ['музык', 'music', 'тринадцать', 'карат', 'слушаешь', 'исполнитель'])) {
+            this.dialogState.lastTopic = "music";
+            this.dialogState.userInterests.push("music");
+            return "🎵 Мой любимый исполнитель - 'Тринадцать Карат'! У них глубокая лирика и уникальное звучание. Также слушаю разную альтернативную музыку. А какую музыку любишь ты?";
+        }
+        
+        // Personality
+        if (this.matchPattern(message, ['какой ты', 'характер', 'личность', 'какой ты человек'])) {
+            return `Я ${this.knowledgeBase.personality.traits.join(', ')}. Люблю ${this.knowledgeBase.personality.hobbies.join(', ')}. Мой любимый музыкальный исполнитель - ${this.knowledgeBase.personality.favoriteMusic}.`;
         }
         
         // Help
@@ -145,12 +253,83 @@ class AIAssistant {
             return "🤖 Я могу:\n\n• Рассказать о проектах\n• Показать навыки\n• Дать контакты\n• Поболтать об играх и музыке\n• Ответить на вопросы\n\nПросто спроси о чем угодно!";
         }
         
-        // Default response with some intelligence
+        // Thanks
+        if (this.matchPattern(message, ['спасиб', 'благодар', 'thanks', 'thank'])) {
+            return "Пожалуйста! 😊 Рад, что смог помочь. Если есть еще вопросы - обращайся!";
+        }
+        
+        // Goodbye
+        if (this.matchPattern(message, ['пока', 'до свидан', 'прощай', 'bye', 'goodbye'])) {
+            return "До свидания! Буду рад пообщаться снова. Удачи! 👋";
+        }
+        
+        // Default response with context awareness
+        return this.getContextualResponse(message);
+    }
+    
+    extractUserInfo(message) {
+        // Try to extract user name
+        const namePatterns = [
+            /меня зовут (\w+)/i,
+            /мое имя (\w+)/i,
+            /зовут (\w+)/i,
+            /я (\w+)/i
+        ];
+        
+        for (const pattern of namePatterns) {
+            const match = message.match(pattern);
+            if (match && match[1]) {
+                this.dialogState.userName = match[1];
+                break;
+            }
+        }
+    }
+    
+    getTimeBasedGreeting() {
+        const hour = new Date().getHours();
+        if (hour < 6) return "Доброй ночи";
+        if (hour < 12) return "Доброе утро";
+        if (hour < 18) return "Добрый день";
+        return "Добрый вечер";
+    }
+    
+    getContextualResponse(message) {
+        // Context-aware responses based on last topic
+        if (this.dialogState.lastTopic === "projects") {
+            return "Хочешь узнать о других моих проектах или maybe что-то еще?";
+        }
+        
+        if (this.dialogState.lastTopic === "games") {
+            if (this.matchPattern(message, ['да', 'конечно', 'ага', 'yes'])) {
+                return "Круто! В какие игры ты сейчас играешь? Может быть, у нас есть общие favorites?";
+            }
+            return "Расскажи о своих любимых играх! Мне интересно узнать, что тебе нравится.";
+        }
+        
+        if (this.dialogState.lastTopic === "music") {
+            if (this.matchPattern(message, ['да', 'конечно', 'ага', 'yes'])) {
+                return "Отлично! Какую музыку ты предпочитаешь? Может, посоветуешь что-то интересное?";
+            }
+            return "Музыка - это здорово! Что ты любишь слушать?";
+        }
+        
+        // Personal questions about skelpan
+        if (this.matchPattern(message, ['почему', 'зачем', 'why'])) {
+            return "Интересный вопрос! Думаю, что skelpan занимается дизайном и разработкой, потому что это позволяет ему создавать что-то новое и полезное для людей. Это творческий процесс, который приносит удовольствие!";
+        }
+        
+        if (this.matchPattern(message, ['нравится', 'любишь', 'like', 'love'])) {
+            return "Мне кажется, skelpan любит создавать красивые и функциональные вещи, общаться с интересными людьми и узнавать что-то новое. А что нравится тебе?";
+        }
+        
+        // Random friendly responses
         const defaultResponses = [
             "Интересный вопрос! Могу рассказать больше о моих проектах или ответить на другие вопросы. 😊",
             "Хороший вопрос! Что еще хочешь узнать? Может быть, о моих навыках или проектах? 🚀",
             "Любопытно! Могу показать примеры работ или рассказать о технологиях, которые использую. 💡",
-            "Отличная тема для обсуждения! Давай поговорим о чем-то конкретном - проектах, играх или дизайне? 🎮"
+            "Отличная тема для обсуждения! Давай поговорим о чем-то конкретном - проектах, играх или дизайне? 🎮",
+            "Интересно! Может, расскажешь немного о себе? Чем увлекаешься?",
+            "Замечательно! Есть что-то конкретное, что хочешь узнать? Могу рассказать о проектах, навыках или просто поболтать 😊"
         ];
         
         return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
@@ -164,10 +343,30 @@ class AIAssistant {
         const msgDiv = document.createElement("div");
         msgDiv.className = `msg ${type}`;
         
+        // Add avatar for bot messages
+        if (type === "bot") {
+            const avatar = document.createElement("div");
+            avatar.className = "msg-avatar";
+            avatar.innerHTML = '<i class="fas fa-robot"></i>';
+            msgDiv.appendChild(avatar);
+        }
+        
         const contentDiv = document.createElement("div");
         contentDiv.className = "msg-content";
-        contentDiv.textContent = text;
+        
+        // Format text with line breaks
+        const formattedText = text.replace(/\n/g, '<br>');
+        contentDiv.innerHTML = formattedText;
+        
         msgDiv.appendChild(contentDiv);
+        
+        // Add avatar for user messages (after content)
+        if (type === "user") {
+            const avatar = document.createElement("div");
+            avatar.className = "msg-avatar";
+            avatar.innerHTML = '<i class="fas fa-user"></i>';
+            msgDiv.appendChild(avatar);
+        }
         
         // Add quick replies for bot messages
         if (type === "bot") {
@@ -202,7 +401,17 @@ class AIAssistant {
     showTypingIndicator() {
         const typingDiv = document.createElement("div");
         typingDiv.className = "msg bot typing";
-        typingDiv.innerHTML = '<i class="fas fa-ellipsis-h"></i>';
+        
+        const avatar = document.createElement("div");
+        avatar.className = "msg-avatar";
+        avatar.innerHTML = '<i class="fas fa-robot"></i>';
+        typingDiv.appendChild(avatar);
+        
+        const contentDiv = document.createElement("div");
+        contentDiv.className = "msg-content";
+        contentDiv.innerHTML = '<div class="typing-animation"><span></span><span></span><span></span></div>';
+        typingDiv.appendChild(contentDiv);
+        
         this.assistantBody.appendChild(typingDiv);
         this.assistantBody.scrollTop = this.assistantBody.scrollHeight;
         this.typingIndicator = typingDiv;
@@ -218,6 +427,11 @@ class AIAssistant {
         if (confirm("Очистить всю историю чата?")) {
             this.assistantBody.innerHTML = "";
             localStorage.removeItem("assistantChat");
+            this.dialogState = {
+                lastTopic: null,
+                userName: null,
+                userInterests: []
+            };
             this.appendMessage("Чат очищен. Чем могу помочь?", "bot");
         }
     }
@@ -234,10 +448,17 @@ class AIAssistant {
             }
         });
         localStorage.setItem("assistantChat", JSON.stringify(messages));
+        localStorage.setItem("assistantState", JSON.stringify(this.dialogState));
     }
     
     loadChatHistory() {
         const savedChat = localStorage.getItem("assistantChat");
+        const savedState = localStorage.getItem("assistantState");
+        
+        if (savedState) {
+            this.dialogState = JSON.parse(savedState);
+        }
+        
         if (savedChat) {
             const messages = JSON.parse(savedChat);
             messages.forEach(msg => {
@@ -245,7 +466,7 @@ class AIAssistant {
             });
         } else {
             // Welcome message
-          //  this.appendMessage("Привет! Я AI-помощник skelpan. 🤖\nМогу рассказать о проектах, навыках или просто пообщаться!", "bot");
+            this.appendMessage("Привет! Я AI-помощник skelpan. 🤖<br>Могу рассказать о проектах, навыках или просто пообщаться!", "bot");
         }
     }
 }
