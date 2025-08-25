@@ -1,4 +1,4 @@
-// AI Assistant with smart responses
+// AI Assistant with smart responses and Telegram integration
 class AIAssistant {
     constructor() {
         this.assistant = document.getElementById("assistant");
@@ -39,7 +39,6 @@ class AIAssistant {
                 github: "https://github.com/skelpan",
                 email: "Через форму на сайте"
             },
-            // Добавлены новые данные
             personality: {
                 traits: ["добрый", "умный", "общительный", "творческий", "логичный"],
                 hobbies: ["видеоигры", "программирование", "дизайн", "музыка", "общение"],
@@ -59,29 +58,54 @@ class AIAssistant {
     
     init() {
         // Event listeners
-        document.getElementById("assistant-toggle").onclick = () => this.toggleAssistant();
-        document.getElementById("mobile-assistant-toggle").onclick = () => this.toggleAssistant();
-        this.closeBtn.onclick = () => this.hideAssistant();
-        this.sendBtn.onclick = () => this.sendMessage();
-        this.clearBtn.onclick = () => this.clearChat();
+        document.getElementById("assistant-toggle").addEventListener("click", () => this.toggleAssistant());
+        if (document.getElementById("mobile-assistant-toggle")) {
+            document.getElementById("mobile-assistant-toggle").addEventListener("click", () => this.toggleAssistant());
+        }
+        this.closeBtn.addEventListener("click", () => this.hideAssistant());
+        this.sendBtn.addEventListener("click", () => this.sendMessage());
+        this.clearBtn.addEventListener("click", () => this.clearChat());
         this.assistantInput.addEventListener("keypress", (e) => {
             if (e.key === "Enter") this.sendMessage();
         });
         
         // Quick replies
-        document.querySelectorAll('.quick-reply').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const message = e.target.getAttribute('data-message');
-                this.assistantInput.value = message;
-                this.sendMessage();
-            });
-        });
+        this.addQuickReplies();
         
         // Drag functionality for assistant window
         this.makeDraggable();
         
         // Load chat history
         this.loadChatHistory();
+    }
+    
+    addQuickReplies() {
+        const quickReplies = [
+            { text: "💼 Проекты", message: "Расскажи о своих проектах" },
+            { text: "🛠 Навыки", message: "Какие у тебя навыки" },
+            { text: "📞 Контакты", message: "Как с тобой связаться" },
+            { text: "🎮 Игры", message: "Какие игры тебе нравятся" },
+            { text: "🎵 Музыка", message: "Какую музыку ты слушаешь" },
+            { text: "🤖 О себе", message: "Расскажи о себе" }
+        ];
+        
+        const repliesContainer = document.createElement("div");
+        repliesContainer.className = "quick-replies-container";
+        
+        quickReplies.forEach(reply => {
+            const btn = document.createElement("button");
+            btn.className = "quick-reply";
+            btn.textContent = reply.text;
+            btn.setAttribute("data-message", reply.message);
+            btn.addEventListener("click", () => {
+                this.assistantInput.value = reply.message;
+                this.sendMessage();
+            });
+            repliesContainer.appendChild(btn);
+        });
+        
+        // Добавляем контейнер с быстрыми ответами после основного контента
+        this.assistantBody.parentNode.insertBefore(repliesContainer, this.assistantBody.nextSibling);
     }
     
     makeDraggable() {
@@ -94,11 +118,7 @@ class AIAssistant {
         let xOffset = 0;
         let yOffset = 0;
         
-        header.addEventListener("mousedown", dragStart);
-        header.addEventListener("mouseup", dragEnd);
-        header.addEventListener("mousemove", drag);
-        
-        function dragStart(e) {
+        const dragStart = (e) => {
             if (e.target.closest('.assistant-controls')) return;
             
             initialX = e.clientX - xOffset;
@@ -107,16 +127,16 @@ class AIAssistant {
             if (e.target === header || e.target.parentElement === header) {
                 isDragging = true;
             }
-        }
+        };
         
-        function dragEnd(e) {
+        const dragEnd = (e) => {
             initialX = currentX;
             initialY = currentY;
             
             isDragging = false;
-        }
+        };
         
-        function drag(e) {
+        const drag = (e) => {
             if (isDragging) {
                 e.preventDefault();
                 
@@ -126,13 +146,17 @@ class AIAssistant {
                 xOffset = currentX;
                 yOffset = currentY;
                 
-                setTranslate(currentX, currentY, this.assistant);
+                this.setTranslate(currentX, currentY, this.assistant);
             }
-        }
+        };
         
-        function setTranslate(xPos, yPos, el) {
-            el.style.transform = "translate3d(" + xPos + "px, " + yPos + "px, 0)";
-        }
+        header.addEventListener("mousedown", dragStart);
+        header.addEventListener("mouseup", dragEnd);
+        header.addEventListener("mousemove", drag);
+    }
+    
+    setTranslate(xPos, yPos, el) {
+        el.style.transform = "translate3d(" + xPos + "px, " + yPos + "px, 0)";
     }
     
     toggleAssistant() {
@@ -162,6 +186,11 @@ class AIAssistant {
             const response = this.generateResponse(text.toLowerCase());
             this.appendMessage(response, "bot");
             this.saveChatHistory();
+            
+            // Если сообщение содержит контактную информацию, отправить в Telegram
+            if (text.includes('свяжись') || text.includes('contact') || text.includes('телефон') || text.includes('email')) {
+                this.sendToTelegram(`Пользователь запросил контакт: ${text}`);
+            }
         }, 800 + Math.random() * 800);
     }
     
@@ -201,22 +230,6 @@ class AIAssistant {
             return response;
         }
         
-        // Specific project details
-        if (this.matchPattern(message, ['aniduo', 'анидуо'])) {
-            const project = this.knowledgeBase.projects.find(p => p.name === "Aniduo");
-            return `🎁 ${project.name}\n${project.description}\nЭтот проект был создан как подарок с использованием технологий: ${project.tech.join(', ')}.\nПосмотреть можно здесь: ${project.url}`;
-        }
-        
-        if (this.matchPattern(message, ['podarok', 'sistr', 'сестр', 'подарок'])) {
-            const project = this.knowledgeBase.projects.find(p => p.name === "Podarok Sistr");
-            return `🎂 ${project.name}\n${project.description}\nЭто поздравительный сайт с современным дизайном, созданный с использованием: ${project.tech.join(', ')}.\nПосмотреть можно здесь: ${project.url}`;
-        }
-        
-        if (this.matchPattern(message, ['block', 'блок', 'mr block'])) {
-            const project = this.knowledgeBase.projects.find(p => p.name === "_Mr_Block");
-            return `💻 ${project.name}\n${project.description}\nПортфолио для программиста, созданное с использованием: ${project.tech.join(', ')}.\nПосмотреть можно здесь: ${project.url}`;
-        }
-        
         // Skills
         if (this.matchPattern(message, ['навык', 'умение', 'skill', 'технолог', 'stack', 'умеешь', 'что ты умеешь'])) {
             this.dialogState.lastTopic = "skills";
@@ -241,11 +254,6 @@ class AIAssistant {
             this.dialogState.lastTopic = "music";
             this.dialogState.userInterests.push("music");
             return "🎵 Мой любимый исполнитель - 'Тринадцать Карат'! У них глубокая лирика и уникальное звучание. Также слушаю разную альтернативную музыку. А какую музыку любишь ты?";
-        }
-        
-        // Personality
-        if (this.matchPattern(message, ['какой ты', 'характер', 'личность', 'какой ты человек'])) {
-            return `Я ${this.knowledgeBase.personality.traits.join(', ')}. Люблю ${this.knowledgeBase.personality.hobbies.join(', ')}. Мой любимый музыкальный исполнитель - ${this.knowledgeBase.personality.favoriteMusic}.`;
         }
         
         // Help
@@ -313,15 +321,6 @@ class AIAssistant {
             return "Музыка - это здорово! Что ты любишь слушать?";
         }
         
-        // Personal questions about skelpan
-        if (this.matchPattern(message, ['почему', 'зачем', 'why'])) {
-            return "Интересный вопрос! Думаю, что skelpan занимается дизайном и разработкой, потому что это позволяет ему создавать что-то новое и полезное для людей. Это творческий процесс, который приносит удовольствие!";
-        }
-        
-        if (this.matchPattern(message, ['нравится', 'любишь', 'like', 'love'])) {
-            return "Мне кажется, skelpan любит создавать красивые и функциональные вещи, общаться с интересными людьми и узнавать что-то новое. А что нравится тебе?";
-        }
-        
         // Random friendly responses
         const defaultResponses = [
             "Интересный вопрос! Могу рассказать больше о моих проектах или ответить на другие вопросы. 😊",
@@ -343,14 +342,6 @@ class AIAssistant {
         const msgDiv = document.createElement("div");
         msgDiv.className = `msg ${type}`;
         
-        // Add avatar for bot messages
-        if (type === "bot") {
-            const avatar = document.createElement("div");
-            avatar.className = "msg-avatar";
-            avatar.innerHTML = '<i class="fas fa-robot"></i>';
-            msgDiv.appendChild(avatar);
-        }
-        
         const contentDiv = document.createElement("div");
         contentDiv.className = "msg-content";
         
@@ -359,41 +350,6 @@ class AIAssistant {
         contentDiv.innerHTML = formattedText;
         
         msgDiv.appendChild(contentDiv);
-        
-        // Add avatar for user messages (after content)
-        if (type === "user") {
-            const avatar = document.createElement("div");
-            avatar.className = "msg-avatar";
-            avatar.innerHTML = '<i class="fas fa-user"></i>';
-            msgDiv.appendChild(avatar);
-        }
-        
-        // Add quick replies for bot messages
-        if (type === "bot") {
-            const quickReplies = document.createElement("div");
-            quickReplies.className = "quick-replies";
-            
-            const replies = [
-                { text: "💼 Проекты", message: "Расскажи о своих проектах" },
-                { text: "🛠 Навыки", message: "Какие у тебя навыки" },
-                { text: "📞 Контакты", message: "Как с тобой связаться" }
-            ];
-            
-            replies.forEach(reply => {
-                const btn = document.createElement("button");
-                btn.className = "quick-reply";
-                btn.textContent = reply.text;
-                btn.setAttribute("data-message", reply.message);
-                btn.addEventListener("click", () => {
-                    this.assistantInput.value = reply.message;
-                    this.sendMessage();
-                });
-                quickReplies.appendChild(btn);
-            });
-            
-            msgDiv.appendChild(quickReplies);
-        }
-        
         this.assistantBody.appendChild(msgDiv);
         this.assistantBody.scrollTop = this.assistantBody.scrollHeight;
     }
@@ -401,11 +357,6 @@ class AIAssistant {
     showTypingIndicator() {
         const typingDiv = document.createElement("div");
         typingDiv.className = "msg bot typing";
-        
-        const avatar = document.createElement("div");
-        avatar.className = "msg-avatar";
-        avatar.innerHTML = '<i class="fas fa-robot"></i>';
-        typingDiv.appendChild(avatar);
         
         const contentDiv = document.createElement("div");
         contentDiv.className = "msg-content";
@@ -419,13 +370,21 @@ class AIAssistant {
     
     hideTypingIndicator() {
         if (this.typingIndicator && this.typingIndicator.parentElement) {
-            this.assistantBody.removeChild(this.typingIndicator);
+            this.typingIndicator.remove();
         }
     }
     
     clearChat() {
         if (confirm("Очистить всю историю чата?")) {
-            this.assistantBody.innerHTML = "";
+            // Сохраняем только контейнер с быстрыми ответами
+            const quickRepliesContainer = document.querySelector('.quick-replies-container');
+            this.assistantBody.innerHTML = '';
+            
+            // Добавляем обратно контейнер с быстрыми ответами
+            if (quickRepliesContainer) {
+                this.assistantBody.parentNode.insertBefore(quickRepliesContainer, this.assistantBody.nextSibling);
+            }
+            
             localStorage.removeItem("assistantChat");
             this.dialogState = {
                 lastTopic: null,
@@ -469,28 +428,30 @@ class AIAssistant {
             this.appendMessage("Привет! Я AI-помощник skelpan. 🤖<br>Могу рассказать о проектах, навыках или просто пообщаться!", "bot");
         }
     }
+    
+    // Отправка сообщения в Telegram
+    async sendToTelegram(message) {
+        try {
+            const response = await fetch(`https://api.telegram.org/bot8325858714:AAHsipAsY-Q_5SnR-pftMkhUSFYvq7lmhwE/sendMessage`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    chat_id: '1860716243',
+                    text: `Сообщение из ассистента: ${message}`,
+                    parse_mode: 'HTML'
+                })
+            });
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Ошибка отправки в Telegram:', error);
+        }
+    }
 }
 
 // Initialize assistant when DOM is loaded
 document.addEventListener("DOMContentLoaded", function() {
     new AIAssistant();
 });
-
-// Add notification function to global scope
-function showNotification(message, type = "success") {
-    const notification = document.createElement("div");
-    notification.className = `notification ${type === "error" ? "error" : ""}`;
-    notification.innerHTML = `
-        <i class="fas fa-${type === "success" ? "check-circle" : "exclamation-circle"}"></i>
-        <span>${message}</span>
-        <button onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        if (notification.parentElement) {
-            notification.remove();
-        }
-    }, 5000);
-}

@@ -1125,3 +1125,420 @@ html {
   from { transform: translateX(100%); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
+/* Стили для анонимного сообщения */
+#anonymous-message-btn {
+    margin-top: 10px;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: var(--darker);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--glass-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(90deg, var(--violet), var(--blue));
+    border-radius: 12px 12px 0 0;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: white;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-body p {
+    margin-bottom: 15px;
+    color: var(--text-dim);
+}
+
+.modal-body textarea {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    background: rgba(5, 5, 16, 0.5);
+    color: var(--text);
+    font-family: "Rajdhani", sans-serif;
+    resize: vertical;
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid var(--glass-border);
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+/* Стили для быстрых ответов ассистента */
+.quick-replies-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px;
+    border-top: 1px solid var(--glass-border);
+}
+
+.quick-reply {
+    background: rgba(30, 144, 255, 0.15);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--text);
+}
+
+.quick-reply:hover {
+    background: rgba(30, 144, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Анимация печатания */
+.typing-animation {
+    display: flex;
+    align-items: center;
+    height: 20px;
+}
+
+.typing-animation span {
+    height: 8px;
+    width: 8px;
+    background: var(--cyan);
+    border-radius: 50%;
+    display: inline-block;
+    margin: 0 2px;
+    opacity: 0.6;
+    animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-animation span:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.typing-animation span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-animation span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typing {
+    0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.6;
+    }
+    30% {
+        transform: translateY(-5px);
+        opacity: 1;
+    }
+}
+
+/* Аватары сообщений */
+.msg-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--violet), var(--blue));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 10px;
+    flex-shrink: 0;
+}
+
+.msg.user .msg-avatar {
+    order: 2;
+    background: linear-gradient(135deg, var(--blue), var(--cyan));
+}
+
+.msg {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.msg-content {
+    background: rgba(30, 144, 255, 0.15);
+    padding: 12px 15px;
+    border-radius: 12px;
+    max-width: 80%;
+    line-height: 1.5;
+}
+
+.msg.user .msg-content {
+    background: rgba(160, 32, 240, 0.15);
+}
+
+/* Адаптивность для модального окна */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        margin: 10px;
+    }
+    
+    .modal-footer {
+        flex-direction: column;
+    }
+    
+    .modal-footer .btn {
+        width: 100%;
+    }
+    
+    .quick-replies-container {
+        flex-direction: column;
+    }
+}
+/* Assistant Styles */
+.assistant {
+    position: fixed;
+    right: 30px;
+    bottom: 30px;
+    width: 380px;
+    max-width: 90vw;
+    height: 500px;
+    max-height: 70vh;
+    background: rgba(5, 5, 16, 0.95);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    display: none;
+    flex-direction: column;
+    font-size: 0.95rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.assistant-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: linear-gradient(90deg, var(--violet), var(--blue));
+    color: #fff;
+    font-weight: 600;
+    cursor: move;
+}
+
+.assistant-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.assistant-close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    padding: 5px;
+}
+
+.assistant-clear {
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+    padding: 5px;
+    font-size: 0.9rem;
+}
+
+.assistant-clear:hover {
+    opacity: 1;
+}
+
+.assistant-close:hover {
+    transform: rotate(90deg);
+}
+
+.assistant-body {
+    padding: 15px;
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.msg {
+    padding: 12px 15px;
+    border-radius: 12px;
+    max-width: 85%;
+    line-height: 1.5;
+    animation: fadeIn 0.3s ease;
+}
+
+.msg.bot {
+    background: rgba(30, 144, 255, 0.15);
+    align-self: flex-start;
+    border-bottom-left-radius: 5px;
+}
+
+.msg.user {
+    background: rgba(160, 32, 240, 0.15);
+    align-self: flex-end;
+    border-bottom-right-radius: 5px;
+}
+
+.msg-content {
+    margin-bottom: 8px;
+}
+
+.quick-replies-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px;
+    border-top: 1px solid var(--glass-border);
+    background: rgba(2, 2, 8, 0.8);
+}
+
+.quick-reply {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--text);
+}
+
+.quick-reply:hover {
+    background: rgba(30, 144, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.assistant-input {
+    display: flex;
+    border-top: 1px solid var(--glass-border);
+    padding: 10px;
+    background: rgba(2, 2, 8, 0.8);
+}
+
+.assistant-input input {
+    flex: 1;
+    border: none;
+    background: var(--glass);
+    padding: 12px 15px;
+    color: var(--text);
+    border-radius: 8px;
+    font-family: "Rajdhani", sans-serif;
+}
+
+.assistant-input input:focus {
+    outline: none;
+    border-color: var(--blue);
+}
+
+.assistant-send {
+    background: linear-gradient(135deg, var(--violet), var(--blue));
+    border: none;
+    color: #fff;
+    padding: 0 15px;
+    cursor: pointer;
+    border-radius: 8px;
+    margin-left: 10px;
+    transition: all 0.3s ease;
+}
+
+.assistant-send:hover {
+    transform: scale(1.05);
+}
+
+.typing {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+}
+
+.typing-animation {
+    display: flex;
+    align-items: center;
+    height: 20px;
+}
+
+.typing-animation span {
+    height: 8px;
+    width: 8px;
+    background: var(--cyan);
+    border-radius: 50%;
+    display: inline-block;
+    margin: 0 2px;
+    opacity: 0.6;
+    animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-animation span:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.typing-animation span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-animation span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typing {
+    0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.6;
+    }
+    30% {
+        transform: translateY(-5px);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

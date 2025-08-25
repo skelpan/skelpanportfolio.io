@@ -39,6 +39,7 @@
     <div class="hero-actions">
       <a href="#portfolio" class="btn primary"><i class="fas fa-laptop-code"></i> Мои проекты</a>
       <a href="#contact" class="btn ghost"><i class="fas fa-paper-plane"></i> Связаться</a>
+      <button id="anonymous-message-btn" class="btn ghost"><i class="fas fa-user-secret"></i> Анонимное сообщение</button>
     </div>
   </section>
 
@@ -175,6 +176,42 @@
     </div>
   </div>
 
+  <!-- Модальное окно для анонимного сообщения -->
+  <div id="anonymous-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Анонимное сообщение</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Отправьте сообщение анонимно. Ваши данные не будут сохранены.</p>
+        <textarea id="anonymous-message" placeholder="Введите ваше сообщение..." rows="5"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button id="send-anonymous" class="btn primary">Отправить анонимно</button>
+        <button class="btn ghost modal-close">Отмена</button>
+      </div>
+    </div>
+  </div>
+<!-- Assistant -->
+<div id="assistant" class="assistant">
+    <div class="assistant-header">
+        <span><i class="fas fa-robot"></i> AI Assistant</span>
+        <div class="assistant-controls">
+            <button id="assistant-clear" class="assistant-clear" title="Очистить чат"><i class="fas fa-trash"></i></button>
+            <button id="assistant-close" class="assistant-close">✕</button>
+        </div>
+    </div>
+    <div class="assistant-body" id="assistant-body">
+        <!-- Сообщения будут добавляться здесь -->
+    </div>
+    <div class="assistant-input">
+        <input type="text" id="assistant-input" placeholder="Напишите ваш вопрос...">
+        <button id="assistant-send" class="assistant-send"><i class="fas fa-paper-plane"></i></button>
+    </div>
+</div>
+
+<script src="assistant.js"></script>
   <script src="script.js"></script>
   <script src="assistant.js"></script>
   <script src="telegram-sender.js"></script>
