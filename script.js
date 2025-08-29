@@ -15,9 +15,11 @@ window.addEventListener('scroll', () => {
 const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
 const mobileMenu = document.getElementById('mobile-menu');
 
-mobileMenuToggle.addEventListener('click', () => {
-  mobileMenu.style.display = mobileMenu.style.display === 'flex' ? 'none' : 'flex';
-});
+if (mobileMenuToggle && mobileMenu) {
+  mobileMenuToggle.addEventListener('click', () => {
+    mobileMenu.style.display = mobileMenu.style.display === 'flex' ? 'none' : 'flex';
+  });
+}
 
 // Close mobile menu when clicking on a link
 document.querySelectorAll('#mobile-menu a').forEach(link => {
@@ -29,6 +31,8 @@ document.querySelectorAll('#mobile-menu a').forEach(link => {
 // Create floating particles
 function createParticles() {
   const particlesContainer = document.getElementById('particles');
+  if (!particlesContainer) return;
+  
   const particleCount = 30;
   
   for (let i = 0; i < particleCount; i++) {
@@ -72,14 +76,10 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         behavior: 'smooth'
       });
       
-      // Close assistant if open
-      const assistant = document.getElementById("assistant");
-      if (assistant.style.display === 'flex') {
-        assistant.style.display = 'none';
-      }
-      
       // Close mobile menu
-      mobileMenu.style.display = 'none';
+      if (mobileMenu) {
+        mobileMenu.style.display = 'none';
+      }
     }
   });
 });
@@ -101,30 +101,33 @@ sections.forEach(section => {
 });
 
 // Form submission
-document.getElementById("contact-form").addEventListener("submit", (e) => {
-  e.preventDefault();
-  
-  const form = e.target;
-  const submitBtn = form.querySelector('button[type="submit"]');
-  
-  // Change button to loading state
-  submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
-  submitBtn.disabled = true;
-  
-  // Simulate form submission
-  setTimeout(() => {
-    submitBtn.innerHTML = '<i class="fas fa-check"></i> Отправлено!';
-    submitBtn.style.background = 'var(--success)';
+const contactForm = document.getElementById("contact-form");
+if (contactForm) {
+  contactForm.addEventListener("submit", (e) => {
+    e.preventDefault();
     
-    // Reset form
+    const form = e.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    
+    // Change button to loading state
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
+    submitBtn.disabled = true;
+    
+    // Simulate form submission
     setTimeout(() => {
-      form.reset();
-      submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Отправить сообщение';
-      submitBtn.style.background = '';
-      submitBtn.disabled = false;
-    }, 2000);
-  }, 1500);
-});
+      submitBtn.innerHTML = '<i class="fas fa-check"></i> Отправлено!';
+      submitBtn.style.background = 'var(--success)';
+      
+      // Reset form
+      setTimeout(() => {
+        form.reset();
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Отправить сообщение';
+        submitBtn.style.background = '';
+        submitBtn.disabled = false;
+      }, 2000);
+    }, 1500);
+  });
+}
 
 // Touch device detection
 function isTouchDevice() {
@@ -135,3 +138,88 @@ function isTouchDevice() {
 if (isTouchDevice()) {
   document.body.classList.add('touch-device');
 }
+
+// Инициализация анонимных сообщений
+function initAnonymousMessage() {
+  const modal = document.getElementById('anonymous-modal');
+  const messageInput = document.getElementById('anonymous-message');
+  const sendBtn = document.getElementById('send-anonymous');
+  const closeBtns = document.querySelectorAll('.modal-close');
+  const openBtn = document.getElementById('anonymous-message-btn');
+  
+  if (!modal || !sendBtn || !openBtn) return;
+  
+  // Открытие модального окна
+  openBtn.addEventListener('click', () => {
+    modal.style.display = 'flex';
+    if (messageInput) messageInput.focus();
+  });
+  
+  // Закрытие модального окна
+  closeBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      modal.style.display = 'none';
+      if (messageInput) messageInput.value = '';
+    });
+  });
+  
+  // Закрытие при клике вне модального окна
+  window.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.style.display = 'none';
+      if (messageInput) messageInput.value = '';
+    }
+  });
+  
+  // Отправка сообщения
+  sendBtn.addEventListener('click', async () => {
+    const message = messageInput ? messageInput.value.trim() : '';
+    if (!message) {
+      alert('Пожалуйста, введите сообщение');
+      return;
+    }
+    
+    const originalText = sendBtn.innerHTML;
+    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
+    sendBtn.disabled = true;
+    
+    try {
+      // Используем функцию из visitor-tracker.js
+      if (window.visitorTracker && window.visitorTracker.sendAnonymousMessage) {
+        const success = await window.visitorTracker.sendAnonymousMessage(message);
+        
+        if (success) {
+          alert('Сообщение отправлено анонимно!');
+          modal.style.display = 'none';
+          if (messageInput) messageInput.value = '';
+        } else {
+          alert('Ошибка отправки сообщения. Попробуйте еще раз.');
+        }
+      } else {
+        alert('Система отправки сообщений не загружена');
+      }
+    } catch (error) {
+      console.error('Ошибка:', error);
+      alert('Произошла ошибка при отправке сообщения.');
+    } finally {
+      sendBtn.innerHTML = originalText;
+      sendBtn.disabled = false;
+    }
+  });
+  
+  // Отправка по Enter
+  if (messageInput) {
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendBtn.click();
+      }
+    });
+  }
+}
+
+// Инициализация при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+  initAnonymousMessage();
+  console.log('Script initialized successfully');
+});
