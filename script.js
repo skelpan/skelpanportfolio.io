@@ -1,35 +1,214 @@
-// Current year in footer
-document.getElementById("year").textContent = new Date().getFullYear();
-
-// Header scroll effect
-const header = document.querySelector('.header');
-window.addEventListener('scroll', () => {
-  if (window.scrollY > 50) {
-    header.classList.add('scrolled');
-  } else {
-    header.classList.remove('scrolled');
-  }
+// Основной скрипт с улучшенной функциональностью
+document.addEventListener('DOMContentLoaded', function() {
+  // Инициализация всех компонентов
+  initNavigation();
+  initSmoothScroll();
+  initAnimations();
+  initContactForm();
+  initMobileMenu();
+  initAssistantToggle();
+  initParticles();
+  initRainEffect();
+  initScrollEffects();
+  
+  // Инициализация Telegram отправителя
+  window.telegramSender = new TelegramSender('8325858714:AAHsipAsY-Q_5SnR-pftMkhUSFYvq7lmhwE', '1860716243');
 });
 
-// Mobile menu toggle
-const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
-const mobileMenu = document.getElementById('mobile-menu');
-
-if (mobileMenuToggle && mobileMenu) {
-  mobileMenuToggle.addEventListener('click', () => {
-    mobileMenu.style.display = mobileMenu.style.display === 'flex' ? 'none' : 'flex';
+// Инициализация навигации
+function initNavigation() {
+  const header = document.querySelector('.header');
+  
+  window.addEventListener('scroll', function() {
+    if (window.scrollY > 50) {
+      header.classList.add('scrolled');
+    } else {
+      header.classList.remove('scrolled');
+    }
   });
 }
 
-// Close mobile menu when clicking on a link
-document.querySelectorAll('#mobile-menu a').forEach(link => {
-  link.addEventListener('click', () => {
-    mobileMenu.style.display = 'none';
+// Плавная прокрутка
+function initSmoothScroll() {
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      const targetId = this.getAttribute('href');
+      if (targetId === '#') return;
+      
+      const targetElement = document.querySelector(targetId);
+      if (targetElement) {
+        const headerHeight = document.querySelector('.header').offsetHeight;
+        const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - headerHeight;
+        
+        window.scrollTo({
+          top: targetPosition,
+          behavior: 'smooth'
+        });
+        
+        // Закрываем мобильное меню, если открыто
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (mobileMenu.classList.contains('active')) {
+          mobileMenu.classList.remove('active');
+        }
+      }
+    });
   });
-});
+}
 
-// Create floating particles
-function createParticles() {
+// Анимации при скролле
+function initAnimations() {
+  const animateOnScroll = function() {
+    const elements = document.querySelectorAll('.card, .about-image, .info-item, .skill-item, .stat');
+    
+    elements.forEach(element => {
+      const elementPosition = element.getBoundingClientRect().top;
+      const screenPosition = window.innerHeight / 1.3;
+      
+      if (elementPosition < screenPosition) {
+        element.classList.add('visible');
+      }
+    });
+  };
+  
+  // Запускаем при загрузке и скролле
+  window.addEventListener('load', animateOnScroll);
+  window.addEventListener('scroll', animateOnScroll);
+}
+
+// Форма обратной связи
+function initContactForm() {
+  const contactForm = document.getElementById('contact-form');
+  
+  if (contactForm) {
+    contactForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const submitBtn = this.querySelector('.submit-btn');
+      const originalText = submitBtn.innerHTML;
+      
+      // Получаем данные формы
+      const formData = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        message: document.getElementById('message').value,
+        timestamp: new Date().toLocaleString('ru-RU')
+      };
+      
+      // Показываем состояние загрузки
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
+      submitBtn.disabled = true;
+      
+      try {
+        // Отправляем данные в Telegram
+        const success = await window.telegramSender.sendMessage(
+          window.telegramSender.formatContactFormData(formData)
+        );
+        
+        if (success) {
+          // Показываем уведомление об успехе
+          showNotification('Сообщение успешно отправлено! Я свяжусь с вами в ближайшее время.', 'success');
+          
+          // Очищаем форму
+          contactForm.reset();
+        } else {
+          throw new Error('Ошибка отправки сообщения');
+        }
+      } catch (error) {
+        // Показываем уведомление об ошибке
+        showNotification('Произошла ошибка при отправке сообщения. Попробуйте еще раз.', 'error');
+        console.error('Ошибка отправки формы:', error);
+      } finally {
+        // Восстанавливаем кнопку
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+      }
+    });
+  }
+}
+
+// Уведомления
+function showNotification(message, type = 'info') {
+  const notificationArea = document.getElementById('notification-area');
+  if (!notificationArea) return;
+  
+  const notification = document.createElement('div');
+  notification.className = `notification ${type}`;
+  notification.innerHTML = `
+    <div class="notification-content">
+      <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+      <span>${message}</span>
+    </div>
+  `;
+  
+  notificationArea.appendChild(notification);
+  
+  // Показываем уведомление
+  setTimeout(() => {
+    notification.classList.add('show');
+  }, 10);
+  
+  // Убираем через 5 секунд
+  setTimeout(() => {
+    notification.classList.remove('show');
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 300);
+  }, 5000);
+}
+
+// Мобильное меню
+function initMobileMenu() {
+  const menuToggle = document.getElementById('mobile-menu-toggle');
+  const mobileMenu = document.getElementById('mobile-menu');
+  
+  if (menuToggle && mobileMenu) {
+    menuToggle.addEventListener('click', function() {
+      mobileMenu.classList.toggle('active');
+    });
+    
+    // Закрытие меню при клике на ссылку
+    mobileMenu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', function() {
+        mobileMenu.classList.remove('active');
+      });
+    });
+  }
+}
+
+// Ассистент
+function initAssistantToggle() {
+  const assistantToggle = document.getElementById('assistant-toggle');
+  const mobileAssistantToggle = document.getElementById('mobile-assistant-toggle');
+  const assistant = document.getElementById('assistant');
+  
+  if (assistantToggle && assistant) {
+    assistantToggle.addEventListener('click', function() {
+      assistant.classList.toggle('active');
+    });
+  }
+  
+  if (mobileAssistantToggle && assistant) {
+    mobileAssistantToggle.addEventListener('click', function() {
+      assistant.classList.toggle('active');
+      document.getElementById('mobile-menu').classList.remove('active');
+    });
+  }
+  
+  // Закрытие ассистента
+  const assistantClose = document.getElementById('assistant-close');
+  if (assistantClose) {
+    assistantClose.addEventListener('click', function() {
+      assistant.classList.remove('active');
+    });
+  }
+}
+
+// Частицы
+function initParticles() {
   const particlesContainer = document.getElementById('particles');
   if (!particlesContainer) return;
   
@@ -39,187 +218,72 @@ function createParticles() {
     const particle = document.createElement('div');
     particle.classList.add('particle');
     
-    // Random size between 1px and 3px
-    const size = Math.random() * 2 + 1;
+    // Случайные размеры и позиции
+    const size = Math.random() * 20 + 5;
+    const posX = Math.random() * 100;
+    const posY = Math.random() * 100;
+    const delay = Math.random() * 20;
+    
     particle.style.width = `${size}px`;
     particle.style.height = `${size}px`;
-    
-    // Random position
-    particle.style.left = `${Math.random() * 100}vw`;
-    particle.style.top = `${Math.random() * 100}vh`;
-    
-    // Random animation duration between 10s and 20s
-    const duration = Math.random() * 10 + 10;
-    particle.style.animationDuration = `${duration}s`;
-    
-    // Random delay
-    particle.style.animationDelay = `${Math.random() * 5}s`;
+    particle.style.left = `${posX}%`;
+    particle.style.top = `${posY}%`;
+    particle.style.animationDelay = `${delay}s`;
+    particle.style.opacity = Math.random() * 0.2 + 0.1;
     
     particlesContainer.appendChild(particle);
   }
 }
 
-createParticles();
-
-// Smooth scrolling for anchor links
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-  anchor.addEventListener('click', function (e) {
-    e.preventDefault();
-    
-    const targetId = this.getAttribute('href');
-    if (targetId === '#') return;
-    
-    const targetElement = document.querySelector(targetId);
-    if (targetElement) {
-      window.scrollTo({
-        top: targetElement.offsetTop - 80,
-        behavior: 'smooth'
-      });
-      
-      // Close mobile menu
-      if (mobileMenu) {
-        mobileMenu.style.display = 'none';
-      }
-    }
-  });
-});
-
-// Intersection Observer for section animations
-const sections = document.querySelectorAll('.section');
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.classList.add('visible');
-    }
-  });
-}, {
-  threshold: 0.1
-});
-
-sections.forEach(section => {
-  observer.observe(section);
-});
-
-// Form submission
-const contactForm = document.getElementById("contact-form");
-if (contactForm) {
-  contactForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    
-    const form = e.target;
-    const submitBtn = form.querySelector('button[type="submit"]');
-    
-    // Change button to loading state
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
-    submitBtn.disabled = true;
-    
-    // Simulate form submission
-    setTimeout(() => {
-      submitBtn.innerHTML = '<i class="fas fa-check"></i> Отправлено!';
-      submitBtn.style.background = 'var(--success)';
-      
-      // Reset form
-      setTimeout(() => {
-        form.reset();
-        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Отправить сообщение';
-        submitBtn.style.background = '';
-        submitBtn.disabled = false;
-      }, 2000);
-    }, 1500);
-  });
-}
-
-// Touch device detection
-function isTouchDevice() {
-  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-}
-
-// Add touch device class
-if (isTouchDevice()) {
-  document.body.classList.add('touch-device');
-}
-
-// Инициализация анонимных сообщений
-function initAnonymousMessage() {
-  const modal = document.getElementById('anonymous-modal');
-  const messageInput = document.getElementById('anonymous-message');
-  const sendBtn = document.getElementById('send-anonymous');
-  const closeBtns = document.querySelectorAll('.modal-close');
-  const openBtn = document.getElementById('anonymous-message-btn');
+// Эффект дождя
+function initRainEffect() {
+  const rainContainer = document.getElementById('rain-container');
+  if (!rainContainer) return;
   
-  if (!modal || !sendBtn || !openBtn) return;
+  const raindropCount = 100;
   
-  // Открытие модального окна
-  openBtn.addEventListener('click', () => {
-    modal.style.display = 'flex';
-    if (messageInput) messageInput.focus();
-  });
-  
-  // Закрытие модального окна
-  closeBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      modal.style.display = 'none';
-      if (messageInput) messageInput.value = '';
-    });
-  });
-  
-  // Закрытие при клике вне модального окна
-  window.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.style.display = 'none';
-      if (messageInput) messageInput.value = '';
-    }
-  });
-  
-  // Отправка сообщения
-  sendBtn.addEventListener('click', async () => {
-    const message = messageInput ? messageInput.value.trim() : '';
-    if (!message) {
-      alert('Пожалуйста, введите сообщение');
-      return;
-    }
+  for (let i = 0; i < raindropCount; i++) {
+    const raindrop = document.createElement('div');
+    raindrop.classList.add('drop');
     
-    const originalText = sendBtn.innerHTML;
-    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
-    sendBtn.disabled = true;
+    // Случайные параметры
+    const left = Math.random() * 100;
+    const height = Math.random() * 20 + 10;
+    const delay = Math.random() * 5;
+    const duration = Math.random() * 1 + 0.5;
     
-    try {
-      // Используем функцию из visitor-tracker.js
-      if (window.visitorTracker && window.visitorTracker.sendAnonymousMessage) {
-        const success = await window.visitorTracker.sendAnonymousMessage(message);
-        
-        if (success) {
-          alert('Сообщение отправлено анонимно!');
-          modal.style.display = 'none';
-          if (messageInput) messageInput.value = '';
-        } else {
-          alert('Ошибка отправки сообщения. Попробуйте еще раз.');
-        }
-      } else {
-        alert('Система отправки сообщений не загружена');
-      }
-    } catch (error) {
-      console.error('Ошибка:', error);
-      alert('Произошла ошибка при отправке сообщения.');
-    } finally {
-      sendBtn.innerHTML = originalText;
-      sendBtn.disabled = false;
-    }
-  });
-  
-  // Отправка по Enter
-  if (messageInput) {
-    messageInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        sendBtn.click();
-      }
-    });
+    raindrop.style.left = `${left}%`;
+    raindrop.style.height = `${height}px`;
+    raindrop.style.animationDelay = `${delay}s`;
+    raindrop.style.animationDuration = `${duration}s`;
+    
+    rainContainer.appendChild(raindrop);
   }
 }
 
-// Инициализация при загрузке
-document.addEventListener('DOMContentLoaded', function() {
-  initAnonymousMessage();
-  console.log('Script initialized successfully');
-});
+// Эффекты при скролле
+function initScrollEffects() {
+  const visualElements = document.querySelectorAll('.visual-element');
+  
+  window.addEventListener('scroll', function() {
+    const scrollY = window.scrollY;
+    
+    // Параллакс эффект для визуальных элементов
+    visualElements.forEach((element, index) => {
+      const speed = 0.05 * (index + 1);
+      element.style.transform = `translateY(${scrollY * speed}px)`;
+    });
+  });
+}
+
+// Утилита для форматирования дат
+function formatDate(date) {
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  return new Date(date).toLocaleDateString('ru-RU', options);
+}
+
+// Утилита для обработки ошибок
+function handleError(error, context = '') {
+  console.error(`Ошибка ${context}:`, error);
+  showNotification(`Произошла ошибка ${context}. Попробуйте еще раз.`, 'error');
+}

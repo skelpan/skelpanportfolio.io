@@ -99,17 +99,23 @@ class PortfolioTracker {
     });
   }
   
-  async sendDataToServer() {
-    try {
-      // Используем TelegramSender для отправки данных
-      if (window.telegramSender) {
-        const message = window.telegramSender.formatProjectStats(this.projects);
-        await window.telegramSender.sendMessage(message);
-        console.log('Данные портфолио отправлены в Telegram');
-      }
-    } catch (error) {
-      console.error('Ошибка отправки данных портфолио:', error);
-    }
+  sendDataToServer() {
+    // Здесь должен быть код отправки данных на сервер
+    console.log('Данные портфолио для отправки:', this.projects);
+    
+    // Пример отправки с использованием fetch (раскомментируйте для использования)
+    /*
+    fetch('https://your-server.com/portfolio-tracking', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ projects: this.projects })
+    })
+    .then(response => response.json())
+    .then(data => console.log('Данные портфолио отправлены:', data))
+    .catch(error => console.error('Ошибка отправки:', error));
+    */
   }
   
   getProjectStats(projectId) {
