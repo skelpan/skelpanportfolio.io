@@ -31,6 +31,9 @@ class PortfolioTracker {
     this.init();
   }
   
+
+
+  
   init() {
     // Загружаем данные из localStorage
     this.loadData();

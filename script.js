@@ -282,6 +282,8 @@ function formatDate(date) {
   return new Date(date).toLocaleDateString('ru-RU', options);
 }
 
+
+
 // Утилита для обработки ошибок
 function handleError(error, context = '') {
   console.error(`Ошибка ${context}:`, error);
