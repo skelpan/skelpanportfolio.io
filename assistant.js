@@ -3,6 +3,25 @@ document.addEventListener('DOMContentLoaded', function() {
   initAssistant();
 });
 
+async function getGeminiResponse(userMessage) {
+    // ВАЖНО: Замените '/api/gemini-chat' на реальный URL вашего серверного обработчика
+    const response = await fetch('/api/gemini-chat', { 
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: userMessage }),
+    });
+
+    if (!response.ok) {
+        throw new Error('Сетевая ошибка или ошибка сервера.');
+    }
+
+    const data = await response.json();
+    return data.text; // Предполагаем, что ваш сервер возвращает ответ в поле 'text'
+}
+
+
 function initAssistant() {
   const assistantBody = document.getElementById('assistant-body');
   const assistantInput = document.getElementById('assistant-input');
@@ -23,31 +42,51 @@ function initAssistant() {
   // Очистка чата
   assistantClear.addEventListener('click', clearChat);
   
-  function sendMessage() {
+  // Новая асинхронная функция sendMessage
+async function sendMessage() {
     const message = assistantInput.value.trim();
     if (!message) return;
     
-    // Добавляем сообщение пользователя
+    // 1. Добавляем сообщение пользователя
     addMessage(message, 'user');
     
-    // Очищаем поле ввода
+    // 2. Очищаем поле ввода
     assistantInput.value = '';
+
+    // Добавляем сообщение-заглушку "Печатает..."
+    const botTypingMsg = addMessage('...', 'bot', true); // true для временного сообщения
     
-    // Имитируем задержку ответа
-    setTimeout(() => {
-      // Генерируем ответ
-      const response = generateResponse(message);
-      addMessage(response, 'bot');
-      
-      // Сохраняем историю чата
-      saveChatHistory();
-      
-      // Отправляем уведомление в Telegram о новом сообщении
-      if (window.visitorTracker) {
-        window.visitorTracker.sendAnonymousMessage(`Сообщение ассистенту: ${message}\nОтвет: ${response}`);
-      }
-    }, 1000);
-  }
+    try {
+        // 3. Отправляем запрос к Gemini API
+        const responseText = await getGeminiResponse(message);
+        
+        // 4. Заменяем "Печатает..." на реальный ответ
+        botTypingMsg.querySelector('.msg-content').textContent = responseText;
+        
+        // 5. Сохраняем историю чата
+        saveChatHistory();
+        
+        // 6. Отправляем уведомление в Telegram (если нужно)
+        if (window.visitorTracker) {
+            window.visitorTracker.sendAnonymousMessage(`Сообщение ассистенту: ${message}\nОтвет: ${responseText}`);
+        }
+    } catch (error) {
+        console.error('Ошибка при получении ответа от Gemini:', error);
+        botTypingMsg.querySelector('.msg-content').textContent = 'Извини, что-то пошло не так при подключении к сервису. Попробуй позже.';
+    }
+}
+
+// Изменяем addMessage, чтобы она могла создавать временные сообщения
+function addMessage(text, sender, isTemporary = false) {
+    const messageDiv = document.createElement('div');
+    messageDiv.classList.add('msg', sender);
+    // ... (остальной код addMessage)
+    
+    assistantBody.appendChild(messageDiv);
+    assistantBody.scrollTop = assistantBody.scrollHeight;
+    
+    return messageDiv; // Возвращаем элемент для дальнейшего изменения
+}
   
   function addMessage(text, sender) {
     const messageDiv = document.createElement('div');
@@ -64,7 +103,7 @@ function initAssistant() {
     assistantBody.scrollTop = assistantBody.scrollHeight;
   }
   
-  function generateResponse(message) {
+  /*function generateResponse(message) {
     const lowerMessage = message.toLowerCase();
     
     // Приветствие
@@ -108,7 +147,7 @@ function initAssistant() {
     
     return randomResponses[Math.floor(Math.random() * randomResponses.length)];
   }
-  
+  */
   function saveChatHistory() {
     const messages = [];
     document.querySelectorAll('.msg').forEach(msg => {
