@@ -18,6 +18,8 @@ const ASSISTANT_CONFIG = {
 let chatHistory = [];
 
 async function getAIResponse(userMessage) {
+  console.log('🔄 Отправка запроса к ИИ...', ASSISTANT_CONFIG.apiUrl);
+  
   try {
     const response = await fetch(ASSISTANT_CONFIG.apiUrl, {
       method: 'POST',
@@ -25,56 +27,43 @@ async function getAIResponse(userMessage) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        message: userMessage,
-        chatHistory: chatHistory.slice(-ASSISTANT_CONFIG.maxHistory)
+        message: userMessage
       }),
     });
 
+    console.log('📡 Статус ответа:', response.status);
+    
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const data = await response.json();
+    console.log('🤖 Ответ ИИ получен:', data);
     return data.text;
     
   } catch (error) {
-    console.error('Ошибка получения ответа от ИИ:', error);
-    
-    // Пробуем альтернативный endpoint если основной не работает
-    if (ASSISTANT_CONFIG.apiUrl.includes('localhost')) {
-      return getFallbackAIResponse(userMessage);
-    }
-    
-    throw error;
+    console.error('❌ Ошибка получения ответа от ИИ:', error);
+    return getFallbackAIResponse(userMessage);
   }
 }
 
-// Резервный ИИ через внешний сервис (можно удалить если не нужно)
-async function getFallbackAIResponse(userMessage) {
-  try {
-    // Простая заглушка - в реальном проекте можно подключить другой API
-    const responses = {
-      'привет': 'Привет! Я помощник skelpan. 🤖 Рад общению!',
-      'проект': 'У skelpan крутые проекты: Aniduo, Podarok Sistr и _Mr_Block! Загляни в раздел работ. 🚀',
-      'навык': 'Skelpan владеет HTML/CSS/JS, React, Flutter, создает адаптивные интерфейсы с анимациями! 💻',
-      'контакт': 'Пиши в Telegram @skelpan31 или через форму на сайте! 📱',
-      'музыка': 'Вдохновляется "Три дня дождя" и "Тринадцать карат" - это чувствуется в работах! 🎵'
-    };
-    
-    const lowerMessage = userMessage.toLowerCase();
-    for (const [key, response] of Object.entries(responses)) {
-      if (lowerMessage.includes(key)) {
-        return response;
-      }
-    }
-    
-    return 'Интересный вопрос! Лучше спроси о конкретных проектах или навыках skelpan. 😊';
-    
-  } catch (error) {
-    return ASSISTANT_CONFIG.fallbackResponses[
-      Math.floor(Math.random() * ASSISTANT_CONFIG.fallbackResponses.length)
-    ];
+function getFallbackAIResponse(userMessage) {
+  console.log('🔄 Используется резервный режим');
+  const lowerMessage = userMessage.toLowerCase();
+  
+  if (lowerMessage.includes('привет')) {
+    return 'Привет! Я помощник skelpan. 🤖';
   }
+  
+  if (lowerMessage.includes('проект')) {
+    return 'Проекты: Aniduo, Podarok Sistr, _Mr_Block. Смотри в разделе работ! 🚀';
+  }
+  
+  if (lowerMessage.includes('навык')) {
+    return 'HTML/CSS/JS, React, Flutter, адаптивные интерфейсы! 💻';
+  }
+  
+  return 'Интересный вопрос! Лучше спроси о конкретных проектах или навыках skelpan. 😊';
 }
 
 function initAssistant() {
