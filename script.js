@@ -286,7 +286,7 @@ function initScrollEffects() {
 // Проверка статуса ассистента
 async function checkAssistantStatus() {
   try {
-    const response = await fetch('https://portfolio-server-dobjqrbes-skelpans-projects.vercel.app/api/status');
+    const response = await fetch('https://portfolio-server-hazel-three.vercel.app/api/status');
     const data = await response.json();
     console.log(`🤖 Ассистент: ${data.aiEnabled ? 'ИИ активирован' : 'Режим заглушки'}`);
     return data;
