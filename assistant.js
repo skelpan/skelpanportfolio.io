@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Конфигурация
 const ASSISTANT_CONFIG = {
-  apiUrl: 'https://portfolio-server-hazel-three.vercel.app/api/chat',
+  apiUrl: 'https://portfolio-server-dobjqrbes-skelpans-projects.vercel.app/api/chat',
   maxHistory: 10,
   fallbackResponses: [
     'Извините, сейчас не могу ответить. Напишите напрямую в Telegram @skelpan31!',
