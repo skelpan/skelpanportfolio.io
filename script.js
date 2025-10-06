@@ -281,9 +281,7 @@ function initScrollEffects() {
   });
 }
 
-
-
-// Проверка статуса ассистента
+// Проверка статуса ассистента - ИСПРАВЛЕННЫЙ URL
 async function checkAssistantStatus() {
   try {
     const response = await fetch('https://portfolio-server-hazel-three.vercel.app/api/status');
