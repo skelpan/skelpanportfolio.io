@@ -289,3 +289,25 @@ function handleError(error, context = '') {
   console.error(`Ошибка ${context}:`, error);
   showNotification(`Произошла ошибка ${context}. Попробуйте еще раз.`, 'error');
 }
+// Проверка статуса ассистента
+async function checkAssistantStatus() {
+  try {
+    const response = await fetch('http://localhost:3000/api/status');
+    const data = await response.json();
+    console.log(`🤖 Ассистент: ${data.aiEnabled ? 'ИИ активирован' : 'Режим заглушки'}`);
+    return data;
+  } catch (error) {
+    console.log('🤖 Ассистент: Сервер недоступен, используется резервный режим');
+    return { aiEnabled: false, status: 'offline' };
+  }
+}
+
+// Добавьте вызов в DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function() {
+  // ... существующий код ...
+  
+  // Проверяем статус ассистента
+  setTimeout(() => {
+    checkAssistantStatus();
+  }, 2000);
+});

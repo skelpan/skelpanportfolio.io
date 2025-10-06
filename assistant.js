@@ -3,24 +3,79 @@ document.addEventListener('DOMContentLoaded', function() {
   initAssistant();
 });
 
-async function getGeminiResponse(userMessage) {
-    // ВАЖНО: Замените '/api/gemini-chat' на реальный URL вашего серверного обработчика
-    const response = await fetch('/api/gemini-chat', { 
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message: userMessage }),
+// Конфигурация
+const ASSISTANT_CONFIG = {
+  apiUrl: 'http://localhost:3000/api/chat', // Измените на ваш URL в продакшене
+  maxHistory: 10,
+  fallbackResponses: [
+    'Извините, сейчас не могу ответить. Напишите напрямую в Telegram @skelpan31!',
+    'Попробуйте позже или свяжитесь с skelpan через форму на сайте.',
+    'Связь временно недоступна. Skelpan будет рад вашему сообщению в Telegram!'
+  ]
+};
+
+// Глобальные переменные
+let chatHistory = [];
+
+async function getAIResponse(userMessage) {
+  try {
+    const response = await fetch(ASSISTANT_CONFIG.apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: userMessage,
+        chatHistory: chatHistory.slice(-ASSISTANT_CONFIG.maxHistory)
+      }),
     });
 
     if (!response.ok) {
-        throw new Error('Сетевая ошибка или ошибка сервера.');
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const data = await response.json();
-    return data.text; // Предполагаем, что ваш сервер возвращает ответ в поле 'text'
+    return data.text;
+    
+  } catch (error) {
+    console.error('Ошибка получения ответа от ИИ:', error);
+    
+    // Пробуем альтернативный endpoint если основной не работает
+    if (ASSISTANT_CONFIG.apiUrl.includes('localhost')) {
+      return getFallbackAIResponse(userMessage);
+    }
+    
+    throw error;
+  }
 }
 
+// Резервный ИИ через внешний сервис (можно удалить если не нужно)
+async function getFallbackAIResponse(userMessage) {
+  try {
+    // Простая заглушка - в реальном проекте можно подключить другой API
+    const responses = {
+      'привет': 'Привет! Я помощник skelpan. 🤖 Рад общению!',
+      'проект': 'У skelpan крутые проекты: Aniduo, Podarok Sistr и _Mr_Block! Загляни в раздел работ. 🚀',
+      'навык': 'Skelpan владеет HTML/CSS/JS, React, Flutter, создает адаптивные интерфейсы с анимациями! 💻',
+      'контакт': 'Пиши в Telegram @skelpan31 или через форму на сайте! 📱',
+      'музыка': 'Вдохновляется "Три дня дождя" и "Тринадцать карат" - это чувствуется в работах! 🎵'
+    };
+    
+    const lowerMessage = userMessage.toLowerCase();
+    for (const [key, response] of Object.entries(responses)) {
+      if (lowerMessage.includes(key)) {
+        return response;
+      }
+    }
+    
+    return 'Интересный вопрос! Лучше спроси о конкретных проектах или навыках skelpan. 😊';
+    
+  } catch (error) {
+    return ASSISTANT_CONFIG.fallbackResponses[
+      Math.floor(Math.random() * ASSISTANT_CONFIG.fallbackResponses.length)
+    ];
+  }
+}
 
 function initAssistant() {
   const assistantBody = document.getElementById('assistant-body');
@@ -28,10 +83,10 @@ function initAssistant() {
   const assistantSend = document.getElementById('assistant-send');
   const assistantClear = document.getElementById('assistant-clear');
   
-  // Загрузка истории чата из localStorage
+  // Загрузка истории чата
   loadChatHistory();
   
-  // Обработчик отправки сообщения
+  // Обработчики событий
   assistantSend.addEventListener('click', sendMessage);
   assistantInput.addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
@@ -39,168 +94,165 @@ function initAssistant() {
     }
   });
   
-  // Очистка чата
   assistantClear.addEventListener('click', clearChat);
   
-  // Новая асинхронная функция sendMessage
+  // Автофокус на инпуте при открытии
+  document.getElementById('assistant-toggle')?.addEventListener('click', function() {
+    setTimeout(() => {
+      assistantInput.focus();
+    }, 300);
+  });
+  
+  document.getElementById('mobile-assistant-toggle')?.addEventListener('click', function() {
+    setTimeout(() => {
+      assistantInput.focus();
+    }, 300);
+  });
+}
+
 async function sendMessage() {
-    const message = assistantInput.value.trim();
-    if (!message) return;
-    
-    // 1. Добавляем сообщение пользователя
-    addMessage(message, 'user');
-    
-    // 2. Очищаем поле ввода
-    assistantInput.value = '';
-
-    // Добавляем сообщение-заглушку "Печатает..."
-    const botTypingMsg = addMessage('...', 'bot', true); // true для временного сообщения
-    
-    try {
-        // 3. Отправляем запрос к Gemini API
-        const responseText = await getGeminiResponse(message);
-        
-        // 4. Заменяем "Печатает..." на реальный ответ
-        botTypingMsg.querySelector('.msg-content').textContent = responseText;
-        
-        // 5. Сохраняем историю чата
-        saveChatHistory();
-        
-        // 6. Отправляем уведомление в Telegram (если нужно)
-        if (window.visitorTracker) {
-            window.visitorTracker.sendAnonymousMessage(`Сообщение ассистенту: ${message}\nОтвет: ${responseText}`);
-        }
-    } catch (error) {
-        console.error('Ошибка при получении ответа от Gemini:', error);
-        botTypingMsg.querySelector('.msg-content').textContent = 'Извини, что-то пошло не так при подключении к сервису. Попробуй позже.';
-    }
-}
-
-// Изменяем addMessage, чтобы она могла создавать временные сообщения
-function addMessage(text, sender, isTemporary = false) {
-    const messageDiv = document.createElement('div');
-    messageDiv.classList.add('msg', sender);
-    // ... (остальной код addMessage)
-    
-    assistantBody.appendChild(messageDiv);
-    assistantBody.scrollTop = assistantBody.scrollHeight;
-    
-    return messageDiv; // Возвращаем элемент для дальнейшего изменения
-}
+  const assistantInput = document.getElementById('assistant-input');
+  const assistantBody = document.getElementById('assistant-body');
+  const message = assistantInput.value.trim();
   
-  function addMessage(text, sender) {
-    const messageDiv = document.createElement('div');
-    messageDiv.classList.add('msg', sender);
-    
-    const contentDiv = document.createElement('div');
-    contentDiv.classList.add('msg-content');
-    contentDiv.textContent = text;
-    
-    messageDiv.appendChild(contentDiv);
-    assistantBody.appendChild(messageDiv);
-    
-    // Прокручиваем к последнему сообщению
-    assistantBody.scrollTop = assistantBody.scrollHeight;
-  }
+  if (!message) return;
   
-  /*function generateResponse(message) {
-    const lowerMessage = message.toLowerCase();
+  // Добавляем сообщение пользователя
+  addMessage(message, 'user');
+  chatHistory.push({ role: 'user', content: message });
+  
+  // Очищаем инпут
+  assistantInput.value = '';
+  
+  // Показываем индикатор печатания
+  const typingMsg = addMessage('Печатает...', 'bot', true);
+  
+  try {
+    // Получаем ответ от ИИ
+    const responseText = await getAIResponse(message);
     
-    // Приветствие
-    if (lowerMessage.includes('привет') || lowerMessage.includes('здравствуй') || lowerMessage.includes('hello')) {
-      return 'Привет! Рад тебя видеть. Чем могу помочь?';
+    // Обновляем сообщение с ответом
+    typingMsg.querySelector('.msg-content').textContent = responseText;
+    typingMsg.classList.remove('typing');
+    
+    // Сохраняем в историю
+    chatHistory.push({ role: 'assistant', content: responseText });
+    saveChatHistory();
+    
+    // Логируем в Telegram (опционально)
+    if (window.visitorTracker) {
+      window.visitorTracker.sendAnonymousMessage(
+        `💬 Диалог с ассистентом:\nВопрос: ${message}\nОтвет: ${responseText.substring(0, 100)}...`
+      );
     }
     
-    // О проектах
-    if (lowerMessage.includes('проект') || lowerMessage.includes('работ')) {
-      return 'У меня есть несколько проектов: Aniduo (подарок для владелицы студии), Podarok Sistr (поздравление сестре) и _Mr_Block (сайт для программиста). Все они доступны в разделе "Мои работы".';
-    }
+  } catch (error) {
+    console.error('Ошибка отправки сообщения:', error);
     
-    // О навыках
-    if (lowerMessage.includes('навык') || lowerMessage.includes('умение') || lowerMessage.includes('технологи')) {
-      return 'Я работаю с HTML/CSS/JS, React, Flutter, а также создаю адаптивные и анимированные интерфейсы. В своих проектах я ценю искренность, креативность и вдохновение.';
-    }
+    // Показываем сообщение об ошибке
+    typingMsg.querySelector('.msg-content').textContent = 
+      ASSISTANT_CONFIG.fallbackResponses[0];
+    typingMsg.classList.remove('typing');
     
-    // О музыке
-    if (lowerMessage.includes('музык') || lowerMessage.includes('три дня дождя') || lowerMessage.includes('тринадцать карат')) {
-      return 'Меня вдохновляет музыка групп "Три дня дождя" и "Тринадцать карат". Их глубина и эмоциональность находят отражение в моих работах.';
-    }
-    
-    // Контакты
-    if (lowerMessage.includes('контакт') || lowerMessage.includes('связаться') || lowerMessage.includes('телеграм')) {
-      return 'Со мной можно связаться через Telegram: @skelpan31 или через форму обратной связи на сайте. Буду рад общению!';
-    }
-    
-    // Благодарность
-    if (lowerMessage.includes('спасибо') || lowerMessage.includes('благодар')) {
-      return 'Всегда пожалуйста! Рад был помочь. Если есть еще вопросы - обращайся!';
-    }
-    
-    // Стандартный ответ
-    const randomResponses = [
-      'Интересный вопрос! Могу рассказать подробнее о моих проектах или навыках.',
-      'Не совсем понял вопрос. Можешь переформулировать?',
-      'Это важная тема! Что именно тебя интересует?',
-      'У меня есть информация об этом. Что конкретно тебе нужно узнать?',
-      'Я еще учусь и могу не знать ответа на все вопросы. Спроси что-нибудь о моих проектах или опыте!'
-    ];
-    
-    return randomResponses[Math.floor(Math.random() * randomResponses.length)];
-  }
-  */
-  function saveChatHistory() {
-    const messages = [];
-    document.querySelectorAll('.msg').forEach(msg => {
-      messages.push({
-        text: msg.querySelector('.msg-content').textContent,
-        sender: msg.classList.contains('user') ? 'user' : 'bot'
-      });
+    // Сохраняем ошибку в историю
+    chatHistory.push({ 
+      role: 'assistant', 
+      content: ASSISTANT_CONFIG.fallbackResponses[0] 
     });
-    
-    localStorage.setItem('assistantChat', JSON.stringify(messages));
+    saveChatHistory();
+  }
+}
+
+function addMessage(text, sender, isTyping = false) {
+  const assistantBody = document.getElementById('assistant-body');
+  const messageDiv = document.createElement('div');
+  messageDiv.classList.add('msg', sender);
+  
+  if (isTyping) {
+    messageDiv.classList.add('typing');
   }
   
-  function loadChatHistory() {
+  const contentDiv = document.createElement('div');
+  contentDiv.classList.add('msg-content');
+  contentDiv.textContent = text;
+  
+  messageDiv.appendChild(contentDiv);
+  assistantBody.appendChild(messageDiv);
+  
+  // Прокручиваем к последнему сообщению
+  assistantBody.scrollTop = assistantBody.scrollHeight;
+  
+  return messageDiv;
+}
+
+function saveChatHistory() {
+  try {
+    const chatData = {
+      messages: chatHistory,
+      timestamp: new Date().toISOString(),
+      version: '1.0'
+    };
+    localStorage.setItem('assistantChat', JSON.stringify(chatData));
+  } catch (error) {
+    console.error('Ошибка сохранения истории:', error);
+  }
+}
+
+function loadChatHistory() {
+  try {
     const savedChat = localStorage.getItem('assistantChat');
+    const assistantBody = document.getElementById('assistant-body');
+    
     if (savedChat) {
-      const messages = JSON.parse(savedChat);
+      const chatData = JSON.parse(savedChat);
+      chatHistory = chatData.messages || [];
       
-      // Очищаем текущий чат (кроме приветственного сообщения)
-      const welcomeMsg = assistantBody.querySelector('.msg');
+      // Очищаем чат (кроме приветственного сообщения)
+      const welcomeMsg = assistantBody.querySelector('.msg.bot');
       assistantBody.innerHTML = '';
+      
       if (welcomeMsg) {
         assistantBody.appendChild(welcomeMsg);
       }
       
-      // Восстанавливаем историю
-      messages.forEach(msg => {
-        if (msg.sender === 'user' || !welcomeMsg) {
-          addMessage(msg.text, msg.sender);
+      // Восстанавливаем историю (пропускаем приветственное если уже есть)
+      chatHistory.forEach(msg => {
+        if (msg.role === 'user' || !welcomeMsg) {
+          addMessage(msg.content, msg.role === 'user' ? 'user' : 'bot');
         }
       });
     }
-  }
-  
-  function clearChat() {
-    // Сохраняем только приветственное сообщение
-    const welcomeMsg = assistantBody.querySelector('.msg.bot');
-    assistantBody.innerHTML = '';
-    
-    if (welcomeMsg) {
-      assistantBody.appendChild(welcomeMsg);
-    }
-    
-    // Очищаем localStorage
-    localStorage.removeItem('assistantChat');
-    
-    // Показываем уведомление
-    showNotification('История чата очищена', 'info');
-  }
-  
-  function showNotification(message, type) {
-    // Используем функцию уведомлений из основного скрипта
-    if (typeof window.showNotification === 'function') {
-      window.showNotification(message, type);
-    }
+  } catch (error) {
+    console.error('Ошибка загрузки истории:', error);
+    chatHistory = [];
   }
 }
+
+function clearChat() {
+  const assistantBody = document.getElementById('assistant-body');
+  
+  // Оставляем только приветственное сообщение
+  const welcomeMsg = assistantBody.querySelector('.msg.bot');
+  assistantBody.innerHTML = '';
+  
+  if (welcomeMsg) {
+    assistantBody.appendChild(welcomeMsg);
+  }
+  
+  // Очищаем историю
+  chatHistory = [];
+  localStorage.removeItem('assistantChat');
+  
+  // Показываем уведомление
+  if (typeof window.showNotification === 'function') {
+    window.showNotification('История чата очищена', 'info');
+  }
+}
+
+// Экспортируем функции для глобального использования
+window.AssistantManager = {
+  sendMessage,
+  clearChat,
+  loadChatHistory,
+  saveChatHistory
+};
