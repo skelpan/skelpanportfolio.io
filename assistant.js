@@ -1,7 +1,9 @@
-// assistant.js - бесплатные AI API
+// assistant.js - DeepSeek API с CORS прокси
 document.addEventListener('DOMContentLoaded', function() {
   initAssistant();
 });
+
+const DEEPSEEK_API_KEY = 'sk-05022752851e4776bdcbdb68aad8f0b6';
 
 async function initAssistant() {
   const assistantInput = document.getElementById('assistant-input');
@@ -17,7 +19,7 @@ async function initAssistant() {
   
   const assistantHeader = document.querySelector('.assistant-header span');
   if (assistantHeader) {
-    assistantHeader.innerHTML = '<i class="fas fa-robot"></i> Помощник (AI)';
+    assistantHeader.innerHTML = '<i class="fas fa-robot"></i> Помощник (DeepSeek)';
   }
 }
 
@@ -33,45 +35,58 @@ async function sendMessage() {
   const typingMsg = addMessage('Думаю...', 'bot', true);
   
   try {
-    // Пробуем бесплатный AI API
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=AIzaSyCH9e4VXcVoR1WsiJ7f7IqDnQV7Vr0o7eA', {
+    // Используем CORS прокси для обхода ограничений
+    const proxyUrl = 'https://api.corsproxy.io/';
+    const targetUrl = 'https://api.deepseek.com/chat/completions';
+    
+    const response = await fetch(`${proxyUrl}?${encodeURIComponent(targetUrl)}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+        'X-Requested-With': 'XMLHttpRequest'
       },
       body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: `Ты помощник skelpan - веб-разработчика. Отвечай кратко на русском.
-            
-            О проектах:
-            - Aniduo: подарок для студии
-            - Podarok Sistr: поздравление сестре  
-            - Mr_Block: сайт программисту
-            
-            Навыки: HTML/CSS/JS, React, Flutter
-            Музыка: Три дня дождя, Тринадцать карат
-            
-            Вопрос: ${message}
-            
-            Ответь кратко (1-2 предложения):`
-          }]
-        }]
+        model: "deepseek-chat",
+        messages: [
+          {
+            role: "system",
+            content: `Ты помощник skelpan - веб-разработчика и дизайнера. 
+            Отвечай кратко, дружелюбно, в стиле "Три дня дождя". 
+            Рассказывай о проектах: 
+            - Aniduo: подарок для владелицы студии с сбором поздравлений
+            - Podarok Sistr: поздравление сестре с новыми методами дизайна  
+            - _Mr_Block: сайт для программиста с современными технологиями
+            Владею HTML/CSS/JS, React, Flutter.
+            Люблю музыку "Три дня дождя" и "Тринадцать карат".
+            Отвечай на русском языке. Будь креативным и вдохновляющим!
+            Максимум 2-3 предложения в ответе.`
+          },
+          {
+            role: "user", 
+            content: message
+          }
+        ],
+        max_tokens: 300,
+        temperature: 0.7,
+        stream: false
       })
     });
 
     if (response.ok) {
       const data = await response.json();
-      const responseText = data.candidates[0].content.parts[0].text;
+      const responseText = data.choices[0].message.content;
       typingMsg.querySelector('.msg-content').textContent = responseText;
+      console.log('✅ DeepSeek Response:', responseText);
     } else {
-      throw new Error('Free API failed');
+      console.error('❌ API Error:', response.status);
+      throw new Error(`API error: ${response.status}`);
     }
     
   } catch (error) {
-    console.error('AI Error:', error);
+    console.error('DeepSeek API Error:', error);
     
-    // Очень умные fallback ответы
+    // Умные fallback ответы
     const fallback = getSmartResponse(message);
     typingMsg.querySelector('.msg-content').textContent = fallback;
   }
@@ -82,27 +97,31 @@ async function sendMessage() {
 function getSmartResponse(message) {
   const lower = message.toLowerCase();
   
-  // Глубокие ответы в стиле ТДД
-  const responses = {
-    'привет': 'Привет... Я эхо skelpan в цифровом пространстве. Чувствую, ты пришёл не просто так... 🌙',
-    'проект': 'Aniduo - подарок студии, где поздравления стали звёздами... Podarok Sistr - сестре, в каждом пикселе - забота... Mr_Block - код как поэзия... 📖',
-    'навык': 'HTML/CSS/JS - ноты, React/Flutter - инструменты... Но настоящая магия - в чувствах, которые я вкладываю в интерфейсы... 💻',
-    'музык': 'Три дня дождя... Их тексты - как строчки из моего дневника. Тринадцать карат - глубина, которая вдохновляет... 🎵',
-    'опыт': 'Год в разработке... 15 проектов... Но важнее - души, тронутые моими работами... 🌟',
-    'контакт': 'Telegram: @skelpan31... Пиши... Иногда одно сообщение может изменить всё... 📱',
-    'цен': 'Стоимость... Как ценность чувств в песне... Давай обсудим в Telegram @skelpan31 💫',
-    'default': 'Иногда слова бессильны... Лучше напиши в Telegram @skelpan31, обсудим твой проект... ☕'
-  };
+  if (lower.includes('привет') || lower.includes('hello')) {
+    return 'Привет! Я помощник skelpan. Расскажу о проектах или просто пообщаемся? 🤖';
+  }
   
-  if (lower.includes('привет')) return responses.привет;
-  if (lower.includes('проект') || lower.includes('работ')) return responses.проект;
-  if (lower.includes('навык') || lower.includes('технолог')) return responses.навык;
-  if (lower.includes('музык') || lower.includes('тдд') || lower.includes('карат')) return responses.музык;
-  if (lower.includes('опыт') || lower.includes('стаж')) return responses.опыт;
-  if (lower.includes('контакт') || lower.includes('телеграм')) return responses.контакт;
-  if (lower.includes('цен') || lower.includes('стоим')) return responses.цен;
+  if (lower.includes('проект') || lower.includes('работ')) {
+    return 'Aniduo - подарок студии, Podarok Sistr - сестре, Mr_Block - программисту. Каждый проект создан с душой! 🚀';
+  }
   
-  return responses.default;
+  if (lower.includes('навык') || lower.includes('технолог')) {
+    return 'Владею HTML/CSS/JS, React, Flutter. Люблю чистый код и креативные решения! 💻';
+  }
+  
+  if (lower.includes('музык') || lower.includes('тдд') || lower.includes('карат')) {
+    return 'Обожаю Три дня дождя и 13 карат! Их музыка вдохновляет меня в работе 🎵';
+  }
+  
+  if (lower.includes('контакт') || lower.includes('телеграм')) {
+    return 'Telegram: @skelpan31 - пиши, отвечу быстро! 📱';
+  }
+  
+  if (lower.includes('опыт') || lower.includes('стаж')) {
+    return 'Более 1 года в веб-разработке, 15+ завершенных проектов! 🌟';
+  }
+  
+  return 'Интересный вопрос! Напиши в Telegram @skelpan31 - обсудим подробнее ✨';
 }
 
 function addMessage(text, sender, isTyping = false) {
