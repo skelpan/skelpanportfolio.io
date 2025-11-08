@@ -281,16 +281,59 @@ function initScrollEffects() {
   });
 }
 
-// Проверка статуса ассистента - ИСПРАВЛЕННЫЙ URL
+// Проверка статуса ассистента - ОБНОВЛЕННЫЙ URL
 async function checkAssistantStatus() {
   try {
-    const response = await fetch('https://portfolio-server-hazel-three.vercel.app/api/status');
+    const response = await fetch('/api/status');
     const data = await response.json();
-    console.log(`🤖 Ассистент: ${data.aiEnabled ? 'ИИ активирован' : 'Режим заглушки'}`);
+    console.log(`🤖 Ассистент (DeepSeek): ${data.aiEnabled ? 'Активирован' : 'Режим заглушки'}`);
+    
+    // Показываем статус в интерфейсе
+    const assistantHeader = document.querySelector('.assistant-header span');
+    if (assistantHeader) {
+      if (data.aiEnabled) {
+        assistantHeader.innerHTML = '<i class="fas fa-robot"></i> Помощник (DeepSeek)';
+      } else {
+        assistantHeader.innerHTML = '<i class="fas fa-robot"></i> Помощник (оффлайн)';
+      }
+    }
+    
     return data;
   } catch (error) {
     console.log('🤖 Ассистент: Сервер недоступен, используется резервный режим');
+    
+    const assistantHeader = document.querySelector('.assistant-header span');
+    if (assistantHeader) {
+      assistantHeader.innerHTML = '<i class="fas fa-robot"></i> Помощник (оффлайн)';
+    }
+    
     return { aiEnabled: false, status: 'offline' };
+  }
+}
+
+// Тестирование подключения к API
+async function testAPIConnection() {
+  try {
+    const testMessage = 'Привет';
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message: testMessage })
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('✅ API connection test successful:', data);
+      return true;
+    } else {
+      console.warn('⚠️ API connection test failed:', response.status);
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ API connection test error:', error);
+    return false;
   }
 }
 
@@ -305,3 +348,11 @@ function handleError(error, context = '') {
   console.error(`Ошибка ${context}:`, error);
   showNotification(`Произошла ошибка ${context}. Попробуйте еще раз.`, 'error');
 }
+
+// Дополнительная инициализация после загрузки
+window.addEventListener('load', function() {
+  // Тестируем API соединение
+  setTimeout(() => {
+    testAPIConnection();
+  }, 3000);
+});
