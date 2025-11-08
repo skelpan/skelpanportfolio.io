@@ -1,10 +1,7 @@
-
+// assistant.js - бесплатные AI API
 document.addEventListener('DOMContentLoaded', function() {
   initAssistant();
 });
-
-const DEEPSEEK_API_KEY = 'sk-f74b7299149347dfa8086b70ce793f56';
-const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
 
 async function initAssistant() {
   const assistantInput = document.getElementById('assistant-input');
@@ -18,10 +15,9 @@ async function initAssistant() {
   
   assistantClear.addEventListener('click', clearChat);
   
-  // Обновляем статус
   const assistantHeader = document.querySelector('.assistant-header span');
   if (assistantHeader) {
-    assistantHeader.innerHTML = '<i class="fas fa-robot"></i> Помощник (DeepSeek)';
+    assistantHeader.innerHTML = '<i class="fas fa-robot"></i> Помощник (AI)';
   }
 }
 
@@ -37,68 +33,76 @@ async function sendMessage() {
   const typingMsg = addMessage('Думаю...', 'bot', true);
   
   try {
-    const response = await fetch(DEEPSEEK_API_URL, {
+    // Пробуем бесплатный AI API
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=AIzaSyCH9e4VXcVoR1WsiJ7f7IqDnQV7Vr0o7eA', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
       },
       body: JSON.stringify({
-        model: "deepseek-chat",
-        messages: [
-          {
-            role: "system",
-            content: `Ты помощник skelpan - веб-разработчика и дизайнера. 
-            Отвечай кратко, дружелюбно, в стиле "Три дня дождя". 
-            Рассказывай о проектах: 
-            - Aniduo: подарок для владелицы студии с сбором поздравлений
-            - Podarok Sistr: поздравление сестре с новыми методами дизайна  
-            - _Mr_Block: сайт для программиста с современными технологиями
-            Владею HTML/CSS/JS, React, Flutter.
-            Люблю музыку "Три дня дождя" и "Тринадцать карат".
-            Отвечай на русском языке. Будь креативным и вдохновляющим!`
-          },
-          {
-            role: "user", 
-            content: message
-          }
-        ],
-        max_tokens: 500,
-        temperature: 0.7,
-        stream: false
+        contents: [{
+          parts: [{
+            text: `Ты помощник skelpan - веб-разработчика. Отвечай кратко на русском.
+            
+            О проектах:
+            - Aniduo: подарок для студии
+            - Podarok Sistr: поздравление сестре  
+            - Mr_Block: сайт программисту
+            
+            Навыки: HTML/CSS/JS, React, Flutter
+            Музыка: Три дня дождя, Тринадцать карат
+            
+            Вопрос: ${message}
+            
+            Ответь кратко (1-2 предложения):`
+          }]
+        }]
       })
     });
 
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+    if (response.ok) {
+      const data = await response.json();
+      const responseText = data.candidates[0].content.parts[0].text;
+      typingMsg.querySelector('.msg-content').textContent = responseText;
+    } else {
+      throw new Error('Free API failed');
     }
-
-    const data = await response.json();
-    const responseText = data.choices[0].message.content;
-    
-    typingMsg.querySelector('.msg-content').textContent = responseText;
     
   } catch (error) {
-    console.error('DeepSeek API Error:', error);
+    console.error('AI Error:', error);
     
-    // Fallback ответы
-    const fallback = getFallbackResponse(message);
+    // Очень умные fallback ответы
+    const fallback = getSmartResponse(message);
     typingMsg.querySelector('.msg-content').textContent = fallback;
   }
   
   typingMsg.classList.remove('typing');
 }
 
-function getFallbackResponse(message) {
+function getSmartResponse(message) {
   const lower = message.toLowerCase();
   
-  if (lower.includes('привет')) return 'Привет! Я помощник skelpan! 🤖';
-  if (lower.includes('проект')) return 'Aniduo, Podarok Sistr, Mr_Block - каждый создан с душой! 🚀';
-  if (lower.includes('навык')) return 'HTML/CSS/JS, React, Flutter - люблю чистый код! 💻';
-  if (lower.includes('музык')) return 'Обожаю Три дня дождя и 13 карат! 🎵';
-  if (lower.includes('контакт')) return 'Telegram: @skelpan31 📱';
+  // Глубокие ответы в стиле ТДД
+  const responses = {
+    'привет': 'Привет... Я эхо skelpan в цифровом пространстве. Чувствую, ты пришёл не просто так... 🌙',
+    'проект': 'Aniduo - подарок студии, где поздравления стали звёздами... Podarok Sistr - сестре, в каждом пикселе - забота... Mr_Block - код как поэзия... 📖',
+    'навык': 'HTML/CSS/JS - ноты, React/Flutter - инструменты... Но настоящая магия - в чувствах, которые я вкладываю в интерфейсы... 💻',
+    'музык': 'Три дня дождя... Их тексты - как строчки из моего дневника. Тринадцать карат - глубина, которая вдохновляет... 🎵',
+    'опыт': 'Год в разработке... 15 проектов... Но важнее - души, тронутые моими работами... 🌟',
+    'контакт': 'Telegram: @skelpan31... Пиши... Иногда одно сообщение может изменить всё... 📱',
+    'цен': 'Стоимость... Как ценность чувств в песне... Давай обсудим в Telegram @skelpan31 💫',
+    'default': 'Иногда слова бессильны... Лучше напиши в Telegram @skelpan31, обсудим твой проект... ☕'
+  };
   
-  return 'Напиши в Telegram @skelpan31! ✨';
+  if (lower.includes('привет')) return responses.привет;
+  if (lower.includes('проект') || lower.includes('работ')) return responses.проект;
+  if (lower.includes('навык') || lower.includes('технолог')) return responses.навык;
+  if (lower.includes('музык') || lower.includes('тдд') || lower.includes('карат')) return responses.музык;
+  if (lower.includes('опыт') || lower.includes('стаж')) return responses.опыт;
+  if (lower.includes('контакт') || lower.includes('телеграм')) return responses.контакт;
+  if (lower.includes('цен') || lower.includes('стоим')) return responses.цен;
+  
+  return responses.default;
 }
 
 function addMessage(text, sender, isTyping = false) {
@@ -122,6 +126,5 @@ function clearChat() {
   const assistantBody = document.getElementById('assistant-body');
   const welcomeMsg = assistantBody.querySelector('.msg.bot');
   assistantBody.innerHTML = '';
-  
   if (welcomeMsg) assistantBody.appendChild(welcomeMsg);
 }
