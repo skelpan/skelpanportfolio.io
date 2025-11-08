@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }, 2000);
 });
 
+
 // Инициализация навигации
 function initNavigation() {
   const header = document.querySelector('.header');
