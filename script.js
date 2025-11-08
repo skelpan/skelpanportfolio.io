@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Проверяем статус ассистента
   setTimeout(() => {
-    checkAssistantStatus();
+  //  checkAssistantStatus();
   }, 2000);
 });
 
@@ -312,7 +312,7 @@ async function checkAssistantStatus() {
 }
 
 // Тестирование подключения к API
-async function testAPIConnection() {
+// async function testAPIConnection() {
   try {
     const testMessage = 'Привет';
     const response = await fetch('/api/chat', {
@@ -334,8 +334,7 @@ async function testAPIConnection() {
   } catch (error) {
     console.error('❌ API connection test error:', error);
     return false;
-  }
-}
+  }}
 
 // Утилита для форматирования дат
 function formatDate(date) {
