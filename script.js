@@ -312,29 +312,7 @@ async function checkAssistantStatus() {
 }
 
 // Тестирование подключения к API
-// async function testAPIConnection() {
-  try {
-    const testMessage = 'Привет';
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ message: testMessage })
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      console.log('✅ API connection test successful:', data);
-      return true;
-    } else {
-      console.warn('⚠️ API connection test failed:', response.status);
-      return false;
-    }
-  } catch (error) {
-    console.error('❌ API connection test error:', error);
-    return false;
-  }}
+
 
 // Утилита для форматирования дат
 function formatDate(date) {
@@ -351,7 +329,5 @@ function handleError(error, context = '') {
 // Дополнительная инициализация после загрузки
 window.addEventListener('load', function() {
   // Тестируем API соединение
-  setTimeout(() => {
-    testAPIConnection();
-  }, 3000);
+  
 });
