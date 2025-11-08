@@ -1,9 +1,7 @@
-// assistant.js - DeepSeek API с CORS прокси
+// assistant.js - для Vercel
 document.addEventListener('DOMContentLoaded', function() {
   initAssistant();
 });
-
-const DEEPSEEK_API_KEY = 'sk-05022752851e4776bdcbdb68aad8f0b6';
 
 async function initAssistant() {
   const assistantInput = document.getElementById('assistant-input');
@@ -35,56 +33,28 @@ async function sendMessage() {
   const typingMsg = addMessage('Думаю...', 'bot', true);
   
   try {
-    // Используем CORS прокси для обхода ограничений
-    const proxyUrl = 'https://api.corsproxy.io/';
-    const targetUrl = 'https://api.deepseek.com/chat/completions';
-    
-    const response = await fetch(`${proxyUrl}?${encodeURIComponent(targetUrl)}`, {
+    // Используем Vercel функцию
+    const response = await fetch('/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
-        'X-Requested-With': 'XMLHttpRequest'
       },
-      body: JSON.stringify({
-        model: "deepseek-chat",
-        messages: [
-          {
-            role: "system",
-            content: `Ты помощник skelpan - веб-разработчика и дизайнера. 
-            Отвечай кратко, дружелюбно, в стиле "Три дня дождя". 
-            Рассказывай о проектах: 
-            - Aniduo: подарок для владелицы студии с сбором поздравлений
-            - Podarok Sistr: поздравление сестре с новыми методами дизайна  
-            - _Mr_Block: сайт для программиста с современными технологиями
-            Владею HTML/CSS/JS, React, Flutter.
-            Люблю музыку "Три дня дождя" и "Тринадцать карат".
-            Отвечай на русском языке. Будь креативным и вдохновляющим!
-            Максимум 2-3 предложения в ответе.`
-          },
-          {
-            role: "user", 
-            content: message
-          }
-        ],
-        max_tokens: 300,
-        temperature: 0.7,
-        stream: false
+      body: JSON.stringify({ 
+        message: message 
       })
     });
 
     if (response.ok) {
       const data = await response.json();
-      const responseText = data.choices[0].message.content;
+      const responseText = data.text;
       typingMsg.querySelector('.msg-content').textContent = responseText;
-      console.log('✅ DeepSeek Response:', responseText);
+      console.log('✅ AI Response:', responseText);
     } else {
-      console.error('❌ API Error:', response.status);
-      throw new Error(`API error: ${response.status}`);
+      throw new Error('API request failed');
     }
     
   } catch (error) {
-    console.error('DeepSeek API Error:', error);
+    console.error('API Error:', error);
     
     // Умные fallback ответы
     const fallback = getSmartResponse(message);
@@ -115,10 +85,6 @@ function getSmartResponse(message) {
   
   if (lower.includes('контакт') || lower.includes('телеграм')) {
     return 'Telegram: @skelpan31 - пиши, отвечу быстро! 📱';
-  }
-  
-  if (lower.includes('опыт') || lower.includes('стаж')) {
-    return 'Более 1 года в веб-разработке, 15+ завершенных проектов! 🌟';
   }
   
   return 'Интересный вопрос! Напиши в Telegram @skelpan31 - обсудим подробнее ✨';
